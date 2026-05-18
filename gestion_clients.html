@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion Clients — HôtelPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="gestion_clients.css" />
+</head>
+<body>
+
+<!-- ══ LOADING OVERLAY ══════════════════════════════════ -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Chargement des clients…</p>
+</div>
+
+<!-- ══ TOAST ════════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL EDIT CLIENT ════════════════════════════════ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>✏️ Modifier le client</h3>
+      <button class="modal-close" id="closeEditModal">&times;</button>
+    </div>
+    <div class="edit-form-grid">
+      <input type="hidden" id="editId" />
+
+      <div class="form-field">
+        <label for="editNom">Nom</label>
+        <input type="text" id="editNom" class="form-input" placeholder="Nom" />
+      </div>
+      <div class="form-field">
+        <label for="editPrenom">Prénom</label>
+        <input type="text" id="editPrenom" class="form-input" placeholder="Prénom" />
+      </div>
+
+      <div class="form-field">
+        <label for="editGenre">Genre</label>
+        <select id="editGenre" class="form-select">
+          <option value="Homme">Homme</option>
+          <option value="Femme">Femme</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="editDateNaissance">Date de naissance</label>
+        <input type="date" id="editDateNaissance" class="form-input" />
+      </div>
+
+      <div class="form-field full">
+        <label for="editEmail">Email</label>
+        <input type="email" id="editEmail" class="form-input" placeholder="email@exemple.com" />
+      </div>
+
+      <div class="form-field">
+        <label for="editTelephone">Téléphone</label>
+        <input type="text" id="editTelephone" class="form-input" placeholder="+216 XX XXX XXX" />
+      </div>
+      <div class="form-field">
+        <label for="editPays">Pays</label>
+        <input type="text" id="editPays" class="form-input" placeholder="Ex: Tunisie" list="paysDatalist" />
+        <datalist id="paysDatalist"></datalist>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cancelEditBtn">Annuler</button>
+      <button class="btn-save" id="saveEditBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRM DELETE ════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <h4>Supprimer ce client ?</h4>
+    <p id="confirmText">Cette action est irréversible.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="cancelDeleteBtn">Annuler</button>
+      <button class="btn-confirm-delete" id="confirmDeleteBtn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="kpi.html" class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      HôtelPro
+    </a>
+    <div class="sub">Management</div>
+  </div>
+
+  <div class="sidebar-admin">
+    <div class="sidebar-admin-avatar">👤</div>
+    <div>
+      <div class="sidebar-admin-name" id="adminName">Admin</div>
+      <div class="sidebar-admin-role">Administrateur</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+
+    <a class="nav-item" href="kpi.html" id="nav-dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Dashboard KPI
+    </a>
+
+    <a class="nav-item active" href="gestion_clients.html" id="nav-clients">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      Clients
+    </a>
+
+    <a class="nav-item" href="kpi.html#reservations" id="nav-reservations">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+      </svg>
+      Réservations
+    </a>
+
+    <a class="nav-item" href="#" id="nav-chambres">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M3 9h18M3 9v10a2 2 0 002 2h14a2 2 0 002-2V9"/>
+      </svg>
+      Chambres
+    </a>
+
+    <div class="nav-label">Rapports</div>
+
+    <a class="nav-item" href="#" id="nav-stats">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      Statistiques
+    </a>
+
+    <a class="nav-item" href="#" id="nav-history">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Historique
+    </a>
+  </nav>
+
+  <div class="sidebar-footer" id="lastUpdated">—</div>
+
+  <button class="btn-logout-sidebar" onclick="logout()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Déconnexion
+  </button>
+</aside>
+
+<!-- ══ MAIN ══════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div>
+      <h1>👥 Gestion des Clients</h1>
+      <div class="breadcrumb">Liste et gestion complète de la clientèle</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="currentDate">—</div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- Header section -->
+    <div class="section-header">
+      <div class="section-header-left">
+        <h2>Clients enregistrés</h2>
+        <span class="count-badge" id="clientCount">—</span>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-card">
+      <div class="filters-title">🔍 Filtres de recherche</div>
+      <div class="filters-grid">
+
+        <!-- Recherche nom/prénom -->
+        <div class="filter-group">
+          <label for="filterSearch">🔎 Nom / Prénom</label>
+          <input type="text" id="filterSearch" class="filter-input" placeholder="Recherche en temps réel…" />
+        </div>
+
+        <!-- Genre -->
+        <div class="filter-group">
+          <label for="filterGenre">⚧️ Genre</label>
+          <select id="filterGenre" class="filter-select">
+            <option value="">Tous</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+        </div>
+
+        <!-- Pays -->
+        <div class="filter-group">
+          <label for="filterPays">🌍 Pays</label>
+          <input type="text" id="filterPays" class="filter-input" placeholder="Ex: Tunisie" list="paysFilterList" />
+          <datalist id="paysFilterList"></datalist>
+        </div>
+
+        <!-- Téléphone -->
+        <div class="filter-group">
+          <label for="filterTel">📞 Téléphone</label>
+          <input type="text" id="filterTel" class="filter-input" placeholder="Recherche partielle…" />
+        </div>
+
+        <!-- Reset -->
+        <div class="filter-group">
+          <label>&nbsp;</label>
+          <button class="btn-reset-filters" id="resetFilters">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+            </svg>
+            Réinitialiser
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Date de naissance (range) -->
+      <div style="margin-top:14px">
+        <div class="filter-group">
+          <label>📅 Date de naissance (plage)</label>
+          <div class="date-range">
+            <input type="date" id="filterDateFrom" class="filter-input" title="De" />
+            <span>→</span>
+            <input type="date" id="filterDateTo" class="filter-input" title="À" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <span class="title">📋 Liste des clients</span>
+        <span id="tableStatus" style="font-size:.75rem;color:var(--text-muted)">—</span>
+      </div>
+      <div class="table-scroll">
+        <table class="clients-table" id="clientsTable">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="id">ID</th>
+              <th class="sortable" data-col="nom">Nom complet</th>
+              <th class="sortable" data-col="genre">Genre</th>
+              <th class="sortable" data-col="email">Email</th>
+              <th class="sortable" data-col="telephone">Téléphone</th>
+              <th class="sortable" data-col="date_naissance">Date naiss.</th>
+              <th class="sortable" data-col="pays">Pays</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clientsBody">
+            <tr>
+              <td colspan="8">
+                <div class="table-empty">
+                  <div class="empty-icon">⏳</div>
+                  <p>Chargement des clients…</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="gestion_clients.js"></script>
+</body>
+</html>

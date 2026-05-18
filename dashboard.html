@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace Client — Royal Mansour Iberostar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboard.css">
+<link rel="stylesheet" href="nos_chambres.css">
+<link rel="stylesheet" href="mes_reservations.css">
+<link rel="stylesheet" href="avis.css">
+<link rel="stylesheet" href="reclamation.css">
+</head>
+<body>
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Royal <span>Mansour</span></div>
+    <p class="sidebar-tagline">Espace Client</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Principal</div>
+    <a href="#" class="nav-item active" data-section="accueil">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Accueil</span>
+    </a>
+    <a href="reserver.html" class="nav-item" data-section="reserver">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Réserver</span>
+      <span class="nav-badge">Nouveau</span>
+    </a>
+    <a href="#" class="nav-item" data-section="reservations">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Mes Réservations</span>
+    </a>
+    <a href="#" class="nav-item" data-section="chambres">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7z"/><path d="M2 12h20"/><path d="M7 12V7"/></svg>
+      <span>Nos Chambres</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:24px;">Services</div>
+    <a href="#" class="nav-item" data-section="spa">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Spa & Bien-être</span>
+    </a>
+    <a href="#" class="nav-item" data-section="restaurant">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Restaurant</span>
+    </a>
+    <a href="#" class="nav-item" data-section="activites">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Activités</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:24px;">Compte</div>
+    <a href="#" class="nav-item" data-section="profil">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Mon Profil</span>
+    </a>
+    <a href="#" class="nav-item" data-section="factures">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Factures & Paiements</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Sophie Martin</div>
+        <div class="sidebar-user-role">Client Gold</div>
+      </div>
+      <button class="sidebar-logout" onclick="logout()" title="Déconnexion">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ========== MOBILE TOPBAR ========== -->
+<div class="mobile-topbar">
+  <button class="burger-btn" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="mobile-logo">Royal <span>Mansour</span></div>
+  <div class="mobile-avatar">S</div>
+</div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="main-content">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <p class="topbar-greeting">Bon retour,</p>
+      <h1 class="topbar-name">Sophie <em>Martin</em></h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="currentDate">Mercredi 13 Mai 2026</span>
+      </div>
+      <button class="notif-btn" onclick="toggleNotifications()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-dot" id="notifDot"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== CHECKED-IN BANNER ========== -->
+  <div class="checkin-banner" id="checkinBanner" style="display:none;">
+    <div class="checkin-banner-left">
+      <div class="checkin-banner-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="checkin-banner-info">
+        <span class="checkin-banner-label">Séjour en cours</span>
+        <span class="checkin-banner-room" id="checkinRoom">—</span>
+      </div>
+    </div>
+    <div class="checkin-banner-center">
+      <div class="checkin-countdown">
+        <span class="checkin-countdown-val" id="checkinDaysLeft">—</span>
+        <span class="checkin-countdown-label">jours restants</span>
+      </div>
+      <div class="checkin-progress-wrap">
+        <div class="checkin-progress-track">
+          <div class="checkin-progress-fill" id="checkinProgress" style="width:0%"></div>
+        </div>
+        <div class="checkin-progress-labels">
+          <span id="checkinStart">—</span>
+          <span id="checkinEnd">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="checkin-banner-right">
+      <button class="checkin-review-btn" onclick="openReview()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Laisser un avis
+      </button>
+      <!-- ✅ BOUTON RÉCLAMATION — dans la bannière checked-in -->
+      <button class="recl-trigger-btn" onclick="openReclamation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Réclamation
+      </button>
+      <button class="checkin-review-btn" onclick="openPublicReviews()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2 12c1.66-4.97 6-8.5 10-8.5S20.34 7.03 22 12c-1.66 4.97-6 8.5-10 8.5S3.66 16.97 2 12z"/></svg>
+        Voir les avis
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== STAT CARDS ========== -->
+  <section class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="stat-card-body">
+        <span class="stat-card-label">Réservations totales</span>
+        <span class="stat-card-value">—</span>
+        <span class="stat-card-sub">depuis votre inscription</span>
+      </div>
+    </div>
+    <div class="stat-card stat-card--gold">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="stat-card-body">
+        <span class="stat-card-label">Statut fidélité</span>
+        <span class="stat-card-value loyalty-status-val">—</span>
+        <span class="stat-card-sub loyalty-status-sub">—</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="stat-card-body">
+        <span class="stat-card-label">Prochain séjour</span>
+        <span class="stat-card-value">—</span>
+        <span class="stat-card-sub">—</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div>
+      <div class="stat-card-body">
+        <span class="stat-card-label">Total dépensé</span>
+        <span class="stat-card-value">—</span>
+        <span class="stat-card-sub">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== MAIN GRID ========== -->
+  <div class="dashboard-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-left">
+
+      <!-- PROCHAINE RÉSERVATION -->
+      <div class="card card--featured">
+        <div class="card-header">
+          <span class="card-eyebrow">Prochaine réservation</span>
+          <span class="badge badge--upcoming">À venir</span>
+        </div>
+        <div class="booking-featured">
+          <div class="booking-room-visual">
+            <div class="booking-room-img-placeholder">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7z"/><path d="M2 12h20"/><path d="M7 12V7"/></svg>
+            </div>
+            <span class="booking-room-type">—</span>
+          </div>
+          <div class="booking-featured-details">
+            <h3 class="booking-featured-title">—</h3>
+            <div class="booking-dates">
+              <div class="booking-date-block">
+                <span class="booking-date-label">Arrivée</span>
+                <span class="booking-date-val">—</span>
+                <span class="booking-date-time">Après 14h00</span>
+              </div>
+              <div class="booking-date-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span>— nuits</span>
+              </div>
+              <div class="booking-date-block">
+                <span class="booking-date-label">Départ</span>
+                <span class="booking-date-val">—</span>
+                <span class="booking-date-time">Avant 12h00</span>
+              </div>
+            </div>
+            <div class="booking-tags"></div>
+            <div class="booking-featured-footer">
+              <div class="booking-total">
+                <span class="booking-total-label">Total séjour</span>
+                <span class="booking-total-val">—</span>
+              </div>
+              <div class="booking-actions">
+                <button class="btn-outline-sm">Modifier</button>
+                <button class="btn-danger-sm">Annuler</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIQUE RESERVATIONS -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-eyebrow">Historique</span>
+          <a href="#" class="card-link" id="historySeeAllLink">Tout voir →</a>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Chambre</th>
+              <th>Dates</th>
+              <th>Pension</th>
+              <th>Montant</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" style="text-align:center; color:var(--text-light); padding:24px 0; font-size:13px;">
+                Chargement...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-right">
+
+      <!-- QUICK ACTIONS -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-eyebrow">Actions rapides</span>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-btn" onclick="window.location.href='reserver.html'">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Nouvelle réservation</span>
+              <span class="quick-btn-sub">Formulaire de réservation</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <button class="quick-btn" onclick="downloadInvoice()">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Télécharger ma facture</span>
+              <span class="quick-btn-sub">Dernier séjour · PDF</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <button class="quick-btn" onclick="openReview()">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Laisser un avis</span>
+              <span class="quick-btn-sub">Évaluez votre séjour</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <!-- ✅ BOUTON RÉCLAMATION — Actions rapides -->
+          <button class="quick-btn quick-btn--recl" onclick="openReclamation()">
+            <div class="quick-btn-icon quick-btn-icon--recl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Déposer une réclamation</span>
+              <span class="quick-btn-sub">Signalez un problème · Détection auto</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <button class="quick-btn" onclick="openPublicReviews()">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2 12c1.66-4.97 6-8.5 10-8.5S20.34 7.03 22 12c-1.66 4.97-6 8.5-10 8.5S3.66 16.97 2 12z"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Voir les avis clients</span>
+              <span class="quick-btn-sub">Avis de nos hôtes</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
+          <button class="quick-btn" onclick="contactConcierge()">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 010 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Contacter la conciergerie</span>
+              <span class="quick-btn-sub">+216 73 681 100</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- FIDÉLITÉ CARD -->
+      <div class="card card--loyalty">
+        <div class="loyalty-header">
+          <div>
+            <span class="card-eyebrow" style="color:var(--gold)">Programme fidélité</span>
+            <h3 class="loyalty-title">Statut <em id="loyaltyStatusLabel">—</em></h3>
+          </div>
+          <div class="loyalty-badge" id="loyaltyBadge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span id="loyaltyBadgeText">—</span>
+          </div>
+        </div>
+        <div class="loyalty-bar-wrap">
+          <div class="loyalty-bar-labels">
+            <span id="loyaltyPts">— pts</span>
+            <span id="loyaltyNextLabel">—</span>
+          </div>
+          <div class="loyalty-bar-track">
+            <div class="loyalty-bar-fill" id="loyaltyBarFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="loyalty-perks" id="loyaltyPerks"></div>
+      </div>
+
+      <!-- MÉTÉO / HOTEL INFO -->
+      <div class="card card--info">
+        <div class="card-header">
+          <span class="card-eyebrow">Mahdia, Tunisie</span>
+        </div>
+        <div class="hotel-info-grid">
+          <div class="info-tile" id="weatherTile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+            <span class="info-tile-val" id="weatherTemp">…</span>
+            <span class="info-tile-label" id="weatherDesc">Météo</span>
+          </div>
+          <div class="info-tile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            <span class="info-tile-val">Check-in</span>
+            <span class="info-tile-label">14h00</span>
+          </div>
+          <div class="info-tile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            <span class="info-tile-val">Check-out</span>
+            <span class="info-tile-label">12h00</span>
+          </div>
+          <div class="info-tile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07"/><path d="M2 2l20 20"/></svg>
+            <span class="info-tile-val">24/7</span>
+            <span class="info-tile-label">Conciergerie</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== NOS CHAMBRES ========== -->
+  <section class="rooms-section" id="roomsSection" style="display:none;">
+    <div class="rooms-hero">
+      <div>
+        <span class="card-eyebrow">Iberostar Selection Royal El Mansour</span>
+        <h2 class="rooms-title">Choisissez la chambre qui convient le mieux à votre voyage</h2>
+      </div>
+      <div class="rooms-source-note">Mahdia · Hôtel 5 étoiles · Bord de mer</div>
+    </div>
+    <div class="rooms-toolbar" id="roomsToolbar">
+      <button class="rooms-filter active" data-room-filter="all">Toutes</button>
+      <button class="rooms-filter" data-room-filter="double">Doubles</button>
+      <button class="rooms-filter" data-room-filter="family">Familiales</button>
+      <button class="rooms-filter" data-room-filter="suite">Suites</button>
+    </div>
+    <div class="rooms-grid" id="roomsGrid"></div>
+    <div class="rooms-common">
+      <div>
+        <span class="card-eyebrow">Toutes les chambres comprennent</span>
+        <h3>Confort 5 étoiles</h3>
+      </div>
+      <div class="rooms-common-list">
+        <span>Balcon ou terrasse</span><span>Wi-Fi haut débit</span>
+        <span>Climatisation</span><span>Salle de bains privative</span>
+        <span>Coffre-fort</span><span>Sèche-cheveux</span>
+        <span>TV écran plat</span><span>Service d'étage</span>
+        <span>Produits de toilette</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ========== REVIEW MODAL ========== -->
+<div class="review-overlay" id="reviewOverlay" onclick="closeReview()"></div>
+<div class="review-modal" id="reviewModal">
+  <div class="review-modal-header">
+    <div class="review-modal-header-left">
+      <span class="card-eyebrow">Votre expérience</span>
+      <h2 class="review-modal-title">Laisser un <em>avis</em></h2>
+    </div>
+    <button class="review-modal-close" onclick="closeReview()" aria-label="Fermer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="review-modal-body">
+    <div class="review-stay-info" id="reviewStayInfo"></div>
+    <div class="review-stars-section">
+      <span class="review-stars-label">Note globale</span>
+      <div class="review-stars" id="reviewStars">
+        <span class="star" data-val="1" onclick="setRating(1)">★</span>
+        <span class="star" data-val="2" onclick="setRating(2)">★</span>
+        <span class="star" data-val="3" onclick="setRating(3)">★</span>
+        <span class="star" data-val="4" onclick="setRating(4)">★</span>
+        <span class="star" data-val="5" onclick="setRating(5)">★</span>
+      </div>
+      <span class="review-rating-text" id="reviewRatingText">Sélectionnez une note</span>
+    </div>
+    <div class="review-categories">
+      <div class="review-cat"><span class="review-cat-label">Chambre</span><div class="review-cat-stars" id="catRoom"><span class="star-sm" data-val="1" onclick="setCatRating('room',1)">★</span><span class="star-sm" data-val="2" onclick="setCatRating('room',2)">★</span><span class="star-sm" data-val="3" onclick="setCatRating('room',3)">★</span><span class="star-sm" data-val="4" onclick="setCatRating('room',4)">★</span><span class="star-sm" data-val="5" onclick="setCatRating('room',5)">★</span></div></div>
+      <div class="review-cat"><span class="review-cat-label">Service</span><div class="review-cat-stars" id="catService"><span class="star-sm" data-val="1" onclick="setCatRating('service',1)">★</span><span class="star-sm" data-val="2" onclick="setCatRating('service',2)">★</span><span class="star-sm" data-val="3" onclick="setCatRating('service',3)">★</span><span class="star-sm" data-val="4" onclick="setCatRating('service',4)">★</span><span class="star-sm" data-val="5" onclick="setCatRating('service',5)">★</span></div></div>
+      <div class="review-cat"><span class="review-cat-label">Restauration</span><div class="review-cat-stars" id="catFood"><span class="star-sm" data-val="1" onclick="setCatRating('food',1)">★</span><span class="star-sm" data-val="2" onclick="setCatRating('food',2)">★</span><span class="star-sm" data-val="3" onclick="setCatRating('food',3)">★</span><span class="star-sm" data-val="4" onclick="setCatRating('food',4)">★</span><span class="star-sm" data-val="5" onclick="setCatRating('food',5)">★</span></div></div>
+      <div class="review-cat"><span class="review-cat-label">Propreté</span><div class="review-cat-stars" id="catClean"><span class="star-sm" data-val="1" onclick="setCatRating('clean',1)">★</span><span class="star-sm" data-val="2" onclick="setCatRating('clean',2)">★</span><span class="star-sm" data-val="3" onclick="setCatRating('clean',3)">★</span><span class="star-sm" data-val="4" onclick="setCatRating('clean',4)">★</span><span class="star-sm" data-val="5" onclick="setCatRating('clean',5)">★</span></div></div>
+    </div>
+    <div class="review-comment-section">
+      <label class="review-comment-label" for="reviewComment">Votre commentaire</label>
+      <textarea class="review-textarea" id="reviewComment" placeholder="Partagez votre expérience avec nous…" rows="4" maxlength="1000"></textarea>
+      <span class="review-char-count" id="avisCharCount">0 / 1000</span>
+    </div>
+  </div>
+  <div class="review-modal-footer">
+    <span class="review-footer-note">Votre avis sera publié anonymement</span>
+    <div class="review-footer-actions">
+      <button class="btn-outline-sm" onclick="closeReview()">Annuler</button>
+      <button class="btn-gold-sm" id="avisSubmitBtn" onclick="submitReview()">Publier mon avis</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PUBLIC REVIEWS MODAL ========== -->
+<div class="review-overlay" id="publicReviewsOverlay" onclick="closePublicReviews()"></div>
+<div class="review-modal" id="publicReviewsModal">
+  <div class="review-modal-header">
+    <div class="review-modal-header-left">
+      <span class="card-eyebrow">Avis clients</span>
+      <h2 class="review-modal-title">Avis <em>réels</em> de nos clients</h2>
+    </div>
+    <button class="review-modal-close" onclick="closePublicReviews()" aria-label="Fermer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="review-modal-body" id="publicReviewsBody">
+    <div class="avis-loading">Chargement des avis…</div>
+  </div>
+</div>
+
+<!-- ========== RÉCLAMATION MODAL ========== -->
+<div class="recl-overlay" id="reclOverlay" onclick="closeReclamation()"></div>
+<div class="recl-modal" id="reclModal">
+
+  <!-- Header -->
+  <div class="recl-modal-header">
+    <div class="recl-modal-header-left">
+      <span class="recl-modal-eyebrow">Assistance Client</span>
+      <h2 class="recl-modal-title">Déposer une <em>réclamation</em></h2>
+    </div>
+    <button class="recl-modal-close" onclick="closeReclamation()" aria-label="Fermer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="recl-modal-body" id="reclModalBody">
+
+    <!-- Séjour auto-sélectionné -->
+    <div id="reclStayInfo"></div>
+
+    <!-- Formulaire (masqué si aucune réservation) -->
+    <div id="reclFormBody">
+
+      <!-- Description -->
+      <div class="recl-field-section">
+        <label class="recl-field-label" for="reclDescription">Décrivez votre problème</label>
+        <textarea
+          class="recl-textarea"
+          id="reclDescription"
+          placeholder="Ex : Le Wi-Fi ne fonctionne pas dans ma chambre depuis ce matin, j'ai essayé de me reconnecter plusieurs fois sans succès…"
+          rows="5"
+          maxlength="1000"
+          oninput="onDescriptionInput()"
+        ></textarea>
+        <span class="recl-char-count" id="reclCharCount">0 / 1000</span>
+      </div>
+
+      <!-- Résultat détection ML -->
+      <div class="recl-type-panel" id="reclTypePanel" style="display:none;"></div>
+
+      <!-- Sélecteur type manuel -->
+      <div class="recl-type-select-wrap">
+        <label class="recl-type-select-label">Type de réclamation</label>
+        <p class="recl-type-select-sub">Détecté automatiquement · Modifiez si nécessaire</p>
+        <select class="recl-select" id="reclTypeSelect" onchange="onTypeSelectChange()">
+          <option value="">— Sélectionner manuellement —</option>
+          <option value="chambre">🛏️  Chambre</option>
+          <option value="salle_de_bain">🚿  Salle de bain</option>
+          <option value="climatisation">❄️  Climatisation</option>
+          <option value="chauffage">🔥  Chauffage</option>
+          <option value="electricite">⚡  Électricité</option>
+          <option value="wifi">📶  Wi-Fi & Internet</option>
+          <option value="television">📺  Télévision</option>
+          <option value="bruit">🔊  Bruit & Nuisances</option>
+          <option value="proprete">🧹  Propreté</option>
+          <option value="literie">🛏️  Literie & Confort</option>
+          <option value="restauration">🍽️  Restauration</option>
+          <option value="petit_dejeuner">☕  Petit-déjeuner</option>
+          <option value="room_service">🛎️  Room Service</option>
+          <option value="piscine">🏊  Piscine</option>
+          <option value="spa">💆  Spa & Hammam</option>
+          <option value="parking">🚗  Parking</option>
+          <option value="service_reception">👤  Service — Réception</option>
+          <option value="service_menage">🧺  Service — Ménage</option>
+          <option value="service_securite">🔒  Sécurité</option>
+          <option value="facturation">🧾  Facturation</option>
+          <option value="remboursement">💰  Remboursement</option>
+          <option value="autre">📋  Autre</option>
+        </select>
+      </div>
+
+    </div><!-- /#reclFormBody -->
+
+  </div><!-- /#reclModalBody -->
+
+  <!-- Footer -->
+  <div class="recl-modal-footer" id="reclModalFooter">
+    <span class="recl-footer-note">Notre équipe traitera votre réclamation sous 24–48h</span>
+    <div class="recl-footer-actions">
+      <button class="btn-outline-sm" onclick="closeReclamation()">Annuler</button>
+      <button class="btn-gold-sm" id="reclSubmitBtn" onclick="submitReclamation()">
+        Soumettre la réclamation
+      </button>
+    </div>
+  </div>
+
+</div><!-- /#reclModal -->
+
+<!-- ========== CHAT ICON ========== -->
+<div class="chat-icon" id="chatIcon" onclick="toggleChat()">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <span class="chat-icon-label">Yasmine</span>
+</div>
+
+<!-- ========== CHAT WELCOME BUBBLE ========== -->
+<div class="chat-welcome" id="chatWelcome">
+  <button class="chat-welcome-close" onclick="dismissWelcome()">✕</button>
+  <p>👋 Bonjour <strong>Sophie</strong> !</p>
+  <p style="margin-top:4px;opacity:.75;font-size:12px;">Je suis Yasmine, votre assistante personnelle. Puis-je vous aider ?</p>
+</div>
+
+<!-- ========== CHAT CONTAINER ========== -->
+<div class="chat-container" id="chatContainer">
+  <div class="chat-header">
+    <div class="chat-header-avatar">Y</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">Yasmine</div>
+      <div class="chat-header-status">
+        <span class="status-dot"></span> En ligne · Iberostar Royal Elmansour
+      </div>
+    </div>
+    <button class="chat-header-close" onclick="toggleChat()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div id="chatBox" class="chat-box"></div>
+  <div class="chat-input-area">
+    <input type="text" id="msg" placeholder="Écrivez votre message..." onkeydown="if(event.key==='Enter') send()">
+    <button class="chat-send-btn" onclick="send()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ========== NOTIFICATIONS PANEL ========== -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header">
+    <span>Notifications</span>
+    <button onclick="markAllRead()">Tout lire</button>
+  </div>
+  <div id="notifList">
+    <div style="padding:24px; text-align:center; color:var(--text-light); font-size:13px;">Chargement…</div>
+  </div>
+</div>
+<div class="notif-overlay" id="notifOverlay" onclick="toggleNotifications()"></div>
+
+<!-- ========== PUBLIC REVIEWS MODAL (login.html style) ========== -->
+<div class="publicReviews-overlay" id="publicReviewsOverlay2"></div>
+<div class="publicReviews-modal" id="publicReviewsModal2">
+  <div class="publicReviews-header">
+    <div class="publicReviews-header-left">
+      <h2>Avis de nos <em>clients</em></h2>
+      <p class="publicReviews-header-sub">Découvrez les expériences vécues par nos hôtes</p>
+    </div>
+    <div class="publicReviews-close" onclick="closePublicReviews()">✕</div>
+  </div>
+  <div class="publicReviews-body" id="publicReviewsBody2">
+    <div class="avis-loading">Chargement des avis…</div>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+<script src="nos_chambres.js"></script>
+<script src="mes_reservations.js"></script>
+<script src="avis.js"></script>
+<script src="reclamation.js"></script>
+
+<script>
+/* ── Styles additionnels quick-btn réclamation ── */
+(function () {
+  const style = document.createElement('style');
+  style.textContent = `
+    .quick-btn--recl .quick-btn-icon { border-color: rgba(239,68,68,.25); }
+    .quick-btn--recl .quick-btn-icon svg { color: #f87171; }
+    .quick-btn--recl:hover { background: rgba(239,68,68,.05); }
+    .quick-btn--recl:hover .quick-btn-icon { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.08); }
+    .quick-btn--recl:hover .quick-btn-icon svg { color: #f87171; }
+    .quick-btn--recl:hover .quick-btn-arrow { color: #f87171; }
+  `;
+  document.head.appendChild(style);
+})();
+
+/* ── INIT Mes Réservations + hook nav ── */
+document.addEventListener('DOMContentLoaded', function () {
+
+  MesReservations.init();
+
+  const navReservations = document.querySelector('[data-section="reservations"]');
+  const navAccueil      = document.querySelector('[data-section="accueil"]');
+
+  if (navReservations) {
+    navReservations.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelector('.topbar-greeting').textContent = 'Mes réservations,';
+      MesReservations.show();
+    });
+  }
+
+  const historySeeAllLink = document.getElementById('historySeeAllLink');
+  if (historySeeAllLink) {
+    historySeeAllLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (navReservations) navReservations.classList.add('active');
+      document.querySelector('.topbar-greeting').textContent = 'Mes réservations,';
+      MesReservations.show();
+    });
+  }
+
+  const navChambres = document.querySelector('[data-section="chambres"]');
+  if (navChambres) {
+    navChambres.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelector('.topbar-greeting').textContent = 'Nos chambres,';
+      MesReservations.hide();
+      NosChambres.show();
+    });
+  }
+
+  if (navAccueil) {
+    navAccueil.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelector('.topbar-greeting').textContent = 'Bon retour,';
+      MesReservations.hide();
+      NosChambres.hide();
+    });
+  }
+
+  document.querySelectorAll('.nav-item:not([data-section="reservations"]):not([data-section="chambres"])').forEach(item => {
+    item.addEventListener('click', function () {
+      MesReservations.hide();
+      NosChambres.hide();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+});
+</script>
+</body>
+</html>

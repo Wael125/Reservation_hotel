@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════
+   gestion_historique.css + gestion_transitions.css
+   Styles : vue Historique · Panneau transitions admin
+   Variables héritées de kpi.css — NE PAS redéfinir :root
+═══════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   HISTORIQUE — Stats rapides
+══════════════════════════════════════════ */
+.hist-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.hist-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.hsc-icon { font-size: 1.6rem; flex-shrink: 0; }
+.hsc-info { display: flex; flex-direction: column; gap: 2px; }
+.hsc-val  { font-size: 1.1rem; font-weight: 700; color: var(--text); font-family: 'DM Mono', monospace; }
+.hsc-lbl  { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+
+/* Bouton export */
+.btn-hist-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(78, 205, 196, .08);
+  color: var(--teal);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+  font-family: inherit;
+}
+.btn-hist-export:hover { background: rgba(78, 205, 196, .18); }
+
+/* Badges historique supplémentaires */
+.res-badge.refused   { background: rgba(155,143,232,.15); color: var(--violet); }
+.res-badge.completed { background: rgba(107,203,139,.15); color: var(--green,#6bcb8b); }
+.res-badge.checked_in{ background: rgba(78,205,196,.15);  color: var(--teal); }
+
+/* Durée nuits */
+.hist-nights {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: .65rem;
+  background: rgba(201,165,90,.12);
+  color: var(--gold);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 600;
+}
+
+/* ── Modal détail ── */
+.hist-detail-content { padding: 4px 0; }
+.hist-detail-grid { display: flex; flex-direction: column; gap: 0; }
+.hdg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.hdg-id {
+  font-family: 'DM Mono', monospace;
+  font-size: .8rem;
+  color: var(--text-muted);
+}
+.hdg-section {
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 10px 0 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+}
+.hdg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  font-size: .82rem;
+}
+.hdg-row span { color: var(--text-muted); }
+.hdg-row strong { color: var(--text); text-align: right; }
+.hist-price-big { color: var(--gold) !important; font-size: 1rem !important; font-family: 'DM Mono', monospace; }
+
+/* ══════════════════════════════════════════
+   TRANSITIONS — Badge flottant
+══════════════════════════════════════════ */
+#transBadgeWrap {
+  position: fixed;
+  bottom: 90px;
+  right: 28px;
+  z-index: 1800;
+}
+
+.trans-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 28px;
+  border: none;
+  background: var(--gold);
+  color: #111;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(201,165,90,.4);
+  transition: transform .2s, box-shadow .2s;
+  font-family: inherit;
+}
+.trans-badge-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(201,165,90,.5);
+}
+.trans-badge-btn #transBadgeCount {
+  background: #111;
+  color: var(--gold);
+  border-radius: 12px;
+  padding: 1px 7px;
+  font-size: .75rem;
+  font-weight: 800;
+  min-width: 20px;
+  text-align: center;
+}
+
+@keyframes trans-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(201,165,90,.4); }
+  50%       { box-shadow: 0 4px 32px rgba(201,165,90,.75); }
+}
+.trans-badge-pulse { animation: trans-pulse 2s ease-in-out infinite; }
+
+/* ══════════════════════════════════════════
+   TRANSITIONS — Panel latéral
+══════════════════════════════════════════ */
+.trans-panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.trans-panel-overlay.open { display: flex; }
+
+.trans-panel-box {
+  width: 420px;
+  max-width: 97vw;
+  height: 100vh;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0,0,0,.4);
+}
+.trans-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.trans-panel-header h3 { font-size: .92rem; font-weight: 700; }
+.trans-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── Card transition ── */
+.trans-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: background .2s;
+}
+.trans-card:hover { background: rgba(255,255,255,.055); }
+.trans-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.trans-card-body { flex: 1; min-width: 0; }
+.trans-card-name {
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trans-card-meta {
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.trans-card-arrow {
+  margin-top: 6px;
+}
+.trans-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .72rem;
+  font-weight: 700;
+  background: rgba(201,165,90,.1);
+  color: var(--gold);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+.trans-card-since {
+  font-size: .68rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  opacity: .7;
+}
+.trans-card-actions { flex-shrink: 0; margin-top: 2px; }
+
+/* ══════════════════════════════════════════
+   TRANSITIONS — Modal décision
+══════════════════════════════════════════ */
+.trans-dec-content { margin-top: 4px; }
+.trans-dec-summary {
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tds-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: .82rem;
+}
+.tds-row:last-of-type { border-bottom: none; }
+.tds-row span  { color: var(--text-muted); }
+.tds-row strong { color: var(--text); }
+.tds-transition-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 14px 0 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.tds-hint {
+  font-size: .78rem;
+  color: var(--gold);
+  text-align: center;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(201,165,90,.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(201,165,90,.18);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .hist-stats-row { grid-template-columns: 1fr 1fr; }
+  .trans-panel-box { width: 100vw; }
+  #transBadgeWrap  { bottom: 70px; right: 16px; }
+}
+@media (max-width: 560px) {
+  .hist-stats-row { grid-template-columns: 1fr; }
+}

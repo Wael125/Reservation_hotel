@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Mansour — Iberostar, Mahdia, Tunisie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="avis.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-logo">Royal <span>Mansour</span></div>
+  <ul class="nav-links">
+    <li><a href="#rooms">Chambres</a></li>
+    <li><a href="#amenities">Services</a></li>
+    <li><a href="#gallery">Galerie</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-nav-outline" onclick="openAuth('login')">Se connecter</button>
+    <button class="btn-nav-gold" onclick="sessionStorage.setItem('pendingRoom','general'); openAuth('login',true)">Réserver</button>
+  </div>
+  <button class="nav-burger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#rooms" onclick="toggleMenu()">Chambres</a>
+  <a href="#amenities" onclick="toggleMenu()">Services</a>
+  <a href="#gallery" onclick="toggleMenu()">Galerie</a>
+  <a href="#contact" onclick="toggleMenu()">Contact</a>
+  <button class="btn-nav-gold w-full mt-12" onclick="openAuth('login',true);toggleMenu()">Réserver</button>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <img src="images/d6c9a213-d59b-456a-bc14-29b57467a8c8.jpg" alt="Hôtel Royal Mansour Mahdia" class="hero-img">
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Hôtel Iberostar Selection · Mahdia</p>
+    <h1 class="hero-title">Royal<br><em>Mansour</em></h1>
+    <p class="hero-subtitle">L'excellence méditerranéenne en Tunisie</p>
+    <p class="hero-location">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Zone Touristique, Mahdia, Tunisie
+    </p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="openAuth('login',true)">Réserver votre séjour</button>
+      <button class="btn-ghost" onclick="scrollTo('rooms')">Voir les chambres</button>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Défiler</span>
+  </div>
+</section>
+
+<!-- BOOKING BAR -->
+<div class="booking-bar">
+  <div class="booking-field">
+    <label>Arrivée</label>
+    <input type="date" id="bar_checkin">
+  </div>
+  <div class="booking-field">
+    <label>Départ</label>
+    <input type="date" id="bar_checkout">
+  </div>
+  <div class="booking-field">
+    <label>Voyageurs</label>
+    <select>
+      <option>1 adulte</option>
+      <option selected>2 adultes</option>
+      <option>2 adultes, 1 enfant</option>
+      <option>2 adultes, 2 enfants</option>
+    </select>
+  </div>
+  <div class="booking-field">
+    <label>Chambre</label>
+    <select>
+      <option>Toutes les chambres</option>
+      <option>Chambre Double — 150 TND</option>
+      <option>Chambre Simple — 250 TND</option>
+      <option>Suite Royale — 400 TND</option>
+    </select>
+  </div>
+  <button class="btn-book" onclick="openAuth('login',true)">Vérifier disponibilité</button>
+</div>
+
+<!-- INTRO -->
+<section class="intro" id="about">
+  <div class="intro-text">
+    <p class="eyebrow">Notre établissement</p>
+    <h2 class="section-title">Un havre de<br>paix <em>méditerranéen</em></h2>
+    <div class="gold-divider"></div>
+    <p class="body-text">Situé dans la zone touristique de Mahdia sur le littoral tunisien, le Royal Mansour Iberostar vous accueille dans un cadre d'exception face à la Méditerranée. Plages de sable fin, jardins luxuriants et architecture orientale composent un décor inoubliable.</p>
+    <p class="body-text" style="margin-top:14px;">Nos chambres et suites, décorées avec soin, allient confort moderne et authenticité tunisienne pour un séjour mémorable en famille, en couple ou entre amis.</p>
+    <div class="intro-stats">
+      <div class="stat">
+        <span class="stat-n">3</span>
+        <span class="stat-l">Types d'hébergement</span>
+      </div>
+      <div class="stat">
+        <span class="stat-n">4</span>
+        <span class="stat-l">Piscines</span>
+      </div>
+      <div class="stat">
+        <span class="stat-n">5★</span>
+        <span class="stat-l">Étoiles</span>
+      </div>
+    </div>
+  </div>
+  <div class="intro-visual">
+    <img src="images/d6c9a213-d59b-456a-bc14-29b57467a8c8.jpg" alt="Façade de l'hôtel Royal Mansour" class="intro-img">
+    <div class="intro-badge">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Mahdia, Tunisie</span>
+    </div>
+  </div>
+</section>
+
+<!-- ROOMS -->
+<section class="rooms-section" id="rooms">
+  <div class="rooms-header">
+    <div>
+      <p class="eyebrow light">Hébergements</p>
+      <h2 class="section-title light">Nos Chambres<br>& <em>Suites</em></h2>
+    </div>
+    <p class="body-text" style="color:rgba(255,255,255,.55);max-width:320px;align-self:flex-end;">Trois formules pour s'adapter à chaque voyage — confort, espace et luxe au bord de la Méditerranée.</p>
+  </div>
+
+  <div class="rooms-grid">
+
+    <!-- DOUBLE -->
+    <article class="room-card">
+      <div class="room-img-wrap">
+        <img src="images/double.png" alt="Chambre Double" class="room-img">
+        <div class="room-overlay"></div>
+        <span class="room-badge popular">Populaire</span>
+      </div>
+      <div class="room-body">
+        <div class="room-head">
+          <div>
+            <h3 class="room-name">Chambre Double</h3>
+            <p class="room-sub">Jardin ou piscine · 2 lits</p>
+          </div>
+          <div class="price-block">
+            <span class="price-num">150</span>
+            <span class="price-unit">TND/nuit</span>
+          </div>
+        </div>
+        <p class="room-desc">Chambre spacieuse avec lits doubles, vue sur le jardin ou la piscine, climatisation et balcon privé. Idéale pour les couples et les familles.</p>
+        <ul class="room-features">
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Lits doubles · Balcon privé
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Climatisation · TV satellite
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Salle de bain · Minibar
+          </li>
+        </ul>
+        <!-- ✅ MODIFIÉ : stocke 'double' dans sessionStorage avant d'ouvrir le modal -->
+        <button class="btn-reserve" onclick="sessionStorage.setItem('pendingRoom','double'); openAuth('login',true,'Chambre Double — 150 TND/nuit')">Réserver cette chambre</button>
+      </div>
+    </article>
+
+    <!-- SIMPLE -->
+    <article class="room-card">
+      <div class="room-img-wrap">
+        <img src="images/simple.png" alt="Chambre Simple" class="room-img">
+        <div class="room-overlay"></div>
+      </div>
+      <div class="room-body">
+        <div class="room-head">
+          <div>
+            <h3 class="room-name">Chambre Simple</h3>
+            <p class="room-sub">Vue mer · Lit queen-size</p>
+          </div>
+          <div class="price-block">
+            <span class="price-num">250</span>
+            <span class="price-unit">TND/nuit</span>
+          </div>
+        </div>
+        <p class="room-desc">Chambre élégante avec lit queen-size, vue mer et décoration soignée. Équipements haut de gamme et petit-déjeuner inclus pour un confort optimal.</p>
+        <ul class="room-features">
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Lit queen-size · Vue mer
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Coffre-fort · Climatisation
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Petit-déjeuner inclus
+          </li>
+        </ul>
+        <!-- ✅ MODIFIÉ : stocke 'simple' dans sessionStorage avant d'ouvrir le modal -->
+        <button class="btn-reserve" onclick="sessionStorage.setItem('pendingRoom','simple'); openAuth('login',true,'Chambre Simple — 250 TND/nuit')">Réserver cette chambre</button>
+      </div>
+    </article>
+
+    <!-- SUITE -->
+    <article class="room-card room-suite">
+      <div class="room-img-wrap">
+        <img src="images/suite.png" alt="Suite Royale" class="room-img">
+        <div class="room-overlay"></div>
+        <span class="room-badge prestige">Suite Prestige</span>
+      </div>
+      <div class="room-body">
+        <div class="room-head">
+          <div>
+            <h3 class="room-name">Suite Royale</h3>
+            <p class="room-sub">Terrasse privée · Vue panoramique</p>
+          </div>
+          <div class="price-block gold">
+            <span class="price-num">400</span>
+            <span class="price-unit">TND/nuit</span>
+          </div>
+        </div>
+        <p class="room-desc">Suite luxueuse avec salon séparé, terrasse privée face à la Méditerranée, bain à remous et service de conciergerie dédié 24h/24.</p>
+        <ul class="room-features">
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Terrasse · Vue panoramique mer
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Bain à remous · Salon séparé
+          </li>
+          <li>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Conciergerie · Demi-pension
+          </li>
+        </ul>
+        <!-- ✅ MODIFIÉ : stocke 'suite' dans sessionStorage avant d'ouvrir le modal -->
+        <button class="btn-reserve gold" onclick="sessionStorage.setItem('pendingRoom','suite'); openAuth('login',true,'Suite Royale — 400 TND/nuit')">Réserver cette suite</button>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services-section" id="amenities">
+  <p class="eyebrow" style="text-align:center;">Nos Services</p>
+  <h2 class="section-title" style="text-align:center;margin-bottom:8px;">Une expérience <em>complète</em></h2>
+  <p class="body-text" style="text-align:center;max-width:500px;margin:0 auto 60px;">Profitez de nos installations de premier ordre pour un séjour inoubliable à Mahdia.</p>
+
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-img-wrap">
+        <img src="images/piscine.png" alt="Piscine extérieure" class="service-img">
+        <div class="service-overlay"></div>
+      </div>
+      <div class="service-body">
+        <h3>Piscine Extérieure</h3>
+        <p>Grande piscine face à la mer avec transats, bar à la piscine et animations estivales quotidiennes.</p>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-img-wrap">
+        <img src="images/resto.png" alt="Restaurant" class="service-img">
+        <div class="service-overlay"></div>
+      </div>
+      <div class="service-body">
+        <h3>Restaurant Gastronomique</h3>
+        <p>Buffet somptueux de cuisine tunisienne et internationale, terrasse avec vue sur la Méditerranée.</p>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-img-wrap">
+        <img src="images/piscine_couvert.png" alt="Piscine couverte" class="service-img">
+        <div class="service-overlay"></div>
+      </div>
+      <div class="service-body">
+        <h3>Piscine Couverte</h3>
+        <p>Piscine intérieure chauffée, ouverte toute l'année — idéale pour les séjours hors saison.</p>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-img-wrap">
+        <img src="images/piscine2.png" alt="Beach Club" class="service-img">
+        <div class="service-overlay"></div>
+      </div>
+      <div class="service-body">
+        <h3>Beach Club & Plage</h3>
+        <p>Accès direct à la plage privée de sable fin, cabines de bain et activités nautiques incluses.</p>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-img-wrap">
+        <img src="images/resto2.png" alt="Bar lounge" class="service-img">
+        <div class="service-overlay"></div>
+      </div>
+      <div class="service-body">
+        <h3>Bar & Lounge</h3>
+        <p>Bar panoramique, cocktails maison et soirées thématiques dans une ambiance feutrée chaque soir.</p>
+      </div>
+    </div>
+    <div class="service-card service-spa">
+      <div class="service-spa-inner">
+        <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="0.9" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <h3>Spa & Hammam</h3>
+        <p>Hammam traditionnel, massages orientaux et soins corps dans notre espace bien-être de 800 m².</p>
+        <button class="btn-reserve" style="margin-top:24px;" onclick="openAuth('login',true,'Soin Spa & Hammam')">Réserver un soin</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery-section" id="gallery">
+  <div class="gallery-header">
+    <p class="eyebrow light">Galerie</p>
+    <h2 class="section-title light">Découvrez<br>notre <em>univers</em></h2>
+  </div>
+  
+  <div class="gallery-grid">
+    <div class="gallery-item gi-tall">
+      <img src="images/d6c9a213-d59b-456a-bc14-29b57467a8c8.jpg" alt="Hôtel Royal Mansour">
+      <div class="gallery-caption">L'hôtel</div>
+    </div>
+    <div class="gallery-item">
+      <img src="images/piscine.png" alt="Piscine">
+      <div class="gallery-caption">Piscine</div>
+    </div>
+    <div class="gallery-item">
+      <img src="images/resto.png" alt="Restaurant">
+      <div class="gallery-caption">Restaurant</div>
+    </div>
+    <div class="gallery-item">
+      <img src="images/suite.png" alt="Suite Royale">
+      <div class="gallery-caption">Suite Royale</div>
+    </div>
+    <div class="gallery-item">
+      <img src="images/piscine2.png" alt="Beach Club">
+      <div class="gallery-caption">Beach Club</div>
+    </div>
+  </div>
+</section>
+<!-- ============================================================
+     SECTION TESTIMONIALS — À remplacer dans login.html
+     (remplacer tout le bloc <section class="testi-section">…</section>)
+     ============================================================ -->
+
+<!-- TESTIMONIALS -->
+<section class="testi-section">
+  <p class="eyebrow" style="text-align:center;">Avis clients</p>
+  <h2 class="section-title" style="text-align:center;">Ce que disent<br>nos <em>hôtes</em></h2>
+
+  <!--
+    Boutons positionnés en absolute à gauche/droite de la section.
+    pointer-events:none sur le conteneur, pointer-events:auto sur chaque bouton.
+    display:none par défaut — JS les affiche selon l'état de pagination.
+  -->
+  <div class="testi-controls" id="testimonialsControls" aria-label="Navigation des avis">
+    <button
+      id="testiPrevBtn"
+      class="testi-btn testi-prev"
+      onclick="showPrevReviews()"
+      style="display:none;"
+      aria-label="Avis précédents"
+    >
+      <span class="testi-btn-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </span>
+    </button>
+
+    <button
+      id="testiNextBtn"
+      class="testi-btn testi-next"
+      onclick="showNextReviews()"
+      style="display:none;"
+      aria-label="Avis suivants"
+    >
+      <span class="testi-btn-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </span>
+    </button>
+  </div>
+
+  <!-- Grid des cartes — JS anime opacity + translateX sur cet élément -->
+  <div class="testi-grid" id="testimonialsGrid">
+    <div class="avis-loading">Chargement des avis…</div>
+  </div>
+  
+
+</section>
+ 
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p class="eyebrow light">Nous contacter</p>
+      <h2 class="section-title light">Planifiez votre<br><em>séjour</em></h2>
+      <div class="gold-divider"></div>
+      <div class="contact-items">
+        <a class="contact-item" href="tel:+21673681100">
+          <div class="contact-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.0 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <div class="contact-text">
+            <strong>Téléphone</strong>
+            <span>73 681 100</span>
+          </div>
+        </a>
+        <a class="contact-item" href="mailto:royal.mansour@iberostar.tn">
+          <div class="contact-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="contact-text">
+            <strong>Email</strong>
+            <span>royal.mansour@iberostar.tn</span>
+          </div>
+        </a>
+        <a class="contact-item" href="https://www.google.com/maps/place/Iberostar+Selection+Royal+El+Mansour/@35.5126002,11.0496963,17z" target="_blank" rel="noopener">
+          <div class="contact-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="contact-text">
+            <strong>Adresse</strong>
+            <span>Zone Touristique, Mahdia, Tunisie</span>
+          </div>
+        </a>
+      </div>
+      <button class="btn-primary" style="margin-top:36px;" onclick="openAuth('login',true)">Réserver maintenant</button>
+    </div>
+    <div class="contact-map">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3236!2d11.0496963!3d35.5126002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x130223ea60513759%3A0x7e21f589496e6b8f!2sIberostar%20Selection%20Royal%20El%20Mansour!5e0!3m2!1sfr!2stn!4v1"
+        width="100%" height="100%"
+        style="border:0;display:block;filter:grayscale(30%) contrast(1.05);"
+        allowfullscreen="" loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="Hôtel Royal Mansour Mahdia"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer" id="footer">
+  <div class="footer-inner">
+    <div class="footer-brand-col">
+      <div class="footer-logo">Royal <span>Mansour</span></div>
+      <p class="footer-desc">Iberostar Selection Royal El Mansour — Zone Touristique, Mahdia. L'excellence tunisienne au cœur de la Méditerranée.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="#rooms">Chambres & Suites</a></li>
+        <li><a href="#amenities">Services</a></li>
+        <li><a href="#gallery">Galerie</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+21673681100">73 681 100</a></li>
+        <li><a href="mailto:royal.mansour@iberostar.tn">royal.mansour@iberostar.tn</a></li>
+        <li>Zone Touristique, Mahdia</li>
+        <li>Tunisie</li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Tarifs</h4>
+      <ul>
+        <li><a href="#rooms" onclick="sessionStorage.setItem('pendingRoom','double'); openAuth('login',true)">Double — 150 TND/nuit</a></li>
+        <li><a href="#rooms" onclick="sessionStorage.setItem('pendingRoom','simple'); openAuth('login',true)">Simple — 250 TND/nuit</a></li>
+        <li><a href="#rooms" onclick="sessionStorage.setItem('pendingRoom','suite'); openAuth('login',true)">Suite — 400 TND/nuit</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Hôtel Royal Mansour Iberostar. Tous droits réservés.</span>
+    <span>Mahdia · Tunisie</span>
+  </div>
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-panel">
+    <div class="auth-header">
+      <button class="auth-close" onclick="closeAuth()">✕</button>
+      <div class="auth-logo-sm">Royal Mansour</div>
+      <h2 class="auth-title" id="authTitle">Bienvenue</h2>
+      <p class="auth-subtitle" id="authSubtitle">Connectez-vous à votre espace client</p>
+    </div>
+
+    <div class="intent-banner" id="intentBanner">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <p>Pour réserver <strong id="intentRoom">votre chambre</strong>, connectez-vous ou créez un compte.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Créer un compte</button>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-msg" id="authMsg"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="field-group">
+          <label>Nom d'utilisateur</label>
+          <input type="text" id="username" placeholder="Votre identifiant">
+        </div>
+        <div class="field-group">
+          <label>Mot de passe</label>
+          <input type="password" id="password" placeholder="••••••••">
+        </div>
+        <button class="btn-auth" onclick="login()">Se connecter</button>
+        <button class="btn-auth-ghost" onclick="switchTab('register')">Pas encore de compte ? S'inscrire →</button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none;">
+        <div class="step-indicator">
+          <div class="step-dot active" id="sd1">1</div>
+          <div class="step-conn"></div>
+          <div class="step-dot" id="sd2">2</div>
+        </div>
+        <!-- Step 1 -->
+        <div id="step1">
+          <div class="field-row">
+            <div class="field-group">
+              <label>Nom</label>
+              <input type="text" id="nom" placeholder="Dupont">
+              <span class="err-sm" id="err_nom"></span>
+            </div>
+            <div class="field-group">
+              <label>Prénom</label>
+              <input type="text" id="prenom" placeholder="Jean">
+              <span class="err-sm" id="err_prenom"></span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="jean@example.com">
+            <span class="err-sm" id="err_email"></span>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Téléphone (8 chiffres)</label>
+              <input type="text" id="tel" placeholder="12345678" maxlength="8">
+              <span class="err-sm" id="err_tel"></span>
+            </div>
+            <div class="field-group">
+              <label>Date de naissance</label>
+              <input type="date" id="dob">
+              <span class="err-sm" id="err_dob"></span>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Genre</label>
+              <div class="radio-row">
+                <label class="radio-opt"><input type="radio" name="genre" value="Homme"> Homme</label>
+                <label class="radio-opt"><input type="radio" name="genre" value="Femme"> Femme</label>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Pays</label>
+              <select id="pays"><option value="">-- Choisir --</option></select>
+            </div>
+          </div>
+          <button class="btn-auth" onclick="goStep2()">Continuer →</button>
+          <button class="btn-auth-ghost" onclick="switchTab('login')">Déjà inscrit ? Connexion</button>
+        </div>
+        <!-- Step 2 -->
+        <div id="step2" style="display:none;">
+          <div class="field-group">
+            <label>Nom d'utilisateur</label>
+            <input type="text" id="new_username" placeholder="monidentifiant">
+            <span class="err-sm" id="err_user"></span>
+          </div>
+          <div class="field-group">
+            <label>Mot de passe</label>
+            <input type="password" id="new_password" placeholder="Minimum 4 caractères">
+          </div>
+          <div class="field-group">
+            <label>Confirmer le mot de passe</label>
+            <input type="password" id="confirm_password" placeholder="••••••••">
+            <span class="err-sm" id="err_pass"></span>
+          </div>
+          <button class="btn-auth" onclick="register()">Créer mon compte</button>
+          <button class="btn-auth-ghost" onclick="backStep1()">← Retour</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ================= CHAT ICON (Bas à droite) ================= -->
+<div class="chat-icon" onclick="toggleChat()">
+🤖
+</div>
+<div class="chat-welcome" id="welcomeOutside">
+👋 Bienvenue <?= $prenom ?> <?= $nom ?>  
+💬 Comment puis-je vous aider ?
+</div>
+
+<!-- ================= PUBLIC REVIEWS MODAL ================= -->
+<div class="publicReviews-overlay" id="publicReviewsOverlay"></div>
+<div class="publicReviews-modal" id="publicReviewsModal">
+  <div class="publicReviews-header">
+    <div class="publicReviews-header-left">
+      <h2>Avis de nos <em>clients</em></h2>
+      <p class="publicReviews-header-sub">Découvrez les expériences vécues par nos hôtes</p>
+    </div>
+    <div class="publicReviews-close" onclick="closePublicReviews()">✕</div>
+  </div>
+  <div class="publicReviews-body" id="publicReviewsBody">
+    <div class="avis-loading">Chargement des avis…</div>
+  </div>
+</div>
+
+<!-- ================= CHATBOT ================= -->
+<div class="chat-container" id="chatContainer">
+
+    <div class="header">
+        🏨 Chatbot Hôtel IA
+    </div>
+
+    <div id="chatBox" class="chat-box"></div>
+
+    <div class="input-area">
+        <input type="text" id="msg" placeholder="Écris un message...">
+        <button onclick="send()">➤</button>
+    </div>
+
+</div>
+<script src="login.js"></script>
+<script src="avis.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>

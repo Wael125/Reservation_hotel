@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réservation — Grand Hôtel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="reserver.css">
+</head>
+<body>
+
+  <div class="bg-overlay"></div>
+
+  <div class="page-wrap">
+
+    <header class="site-header">
+      <div class="logo">
+        <span class="logo-star">✦</span>
+        <span class="logo-text">Grand Hôtel</span>
+      </div>
+      <a href="dashboard.php" class="btn-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Tableau de bord
+      </a>
+    </header>
+
+    <main class="reservation-card">
+
+      <div class="card-header">
+        <p class="card-pretitle">Bienvenue</p>
+        <h1 class="card-title">Formulaire de Réservation</h1>
+        <p class="card-subtitle">Remplissez les étapes ci-dessous pour réserver votre séjour</p>
+      </div>
+
+      <!-- STEPPER -->
+      <div class="stepper" id="stepper">
+        <div class="step active" id="step-dot-1"><span>01</span><small>Identité</small></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-dot-2"><span>02</span><small>Séjour</small></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-dot-3"><span>03</span><small>Paiement</small></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-dot-4"><span>04</span><small>Facture</small></div>
+      </div>
+
+      <form id="reservationForm" action="reserver.php" method="POST" novalidate>
+
+        <!-- ══════════════ SECTION 1 ══════════════ -->
+        <section class="form-section active" id="section-1">
+          <div class="section-label">
+            <span class="section-number">01</span>
+            <span class="section-title">Informations personnelles</span>
+          </div>
+
+          <div class="fields-grid">
+            <div class="field-group full">
+              <label for="nom">Nom complet</label>
+              <div class="input-wrap">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="nom" name="nom" placeholder="Jean Dupont" required>
+              </div>
+              <span class="field-error" id="err-nom"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="email">Email</label>
+              <div class="input-wrap">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <input type="email" id="email" name="email" placeholder="exemple@mail.com" required>
+              </div>
+              <span class="field-error" id="err-email"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="telephone">Téléphone (8 chiffres)</label>
+              <div class="input-wrap">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+                <input type="text" id="telephone" name="telephone" placeholder="12345678" maxlength="8" required>
+              </div>
+              <span class="field-error" id="err-tel"></span>
+            </div>
+          </div>
+
+          <div class="section-nav">
+            <div></div>
+            <button type="button" class="btn-next" onclick="nextSection(1)">
+              Continuer
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- ══════════════ SECTION 2 ══════════════ -->
+        <section class="form-section" id="section-2">
+          <div class="section-label">
+            <span class="section-number">02</span>
+            <span class="section-title">Détails du séjour</span>
+          </div>
+
+          <div class="fields-grid">
+            <div class="field-group">
+              <label for="date_arrivee">Date d'arrivée</label>
+              <div class="input-wrap">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="date" id="date_arrivee" name="date_arrivee" required>
+              </div>
+              <span class="field-error" id="err-arrivee"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="date_depart">Date de départ</label>
+              <div class="input-wrap">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="date" id="date_depart" name="date_depart" required>
+              </div>
+              <span class="field-error" id="err-depart"></span>
+            </div>
+
+            <div class="field-group full">
+              <label>Type de chambre</label>
+              <div class="room-cards" id="roomCards">
+                <label class="room-card">
+                  <input type="radio" name="type_chambre" value="simple" required>
+                  <div class="room-card-body">
+                    <span class="room-emoji">🛏</span>
+                    <span class="room-name">Simple</span>
+                    <span class="room-price">100 DT / adulte / nuit</span>
+                    <span class="room-price-child">50 DT / enfant / nuit</span>
+                  </div>
+                </label>
+                <label class="room-card">
+                  <input type="radio" name="type_chambre" value="double">
+                  <div class="room-card-body">
+                    <span class="room-emoji">🛏🛏</span>
+                    <span class="room-name">Double</span>
+                    <span class="room-price">120 DT / adulte / nuit</span>
+                    <span class="room-price-child">60 DT / enfant / nuit</span>
+                  </div>
+                </label>
+                <label class="room-card">
+                  <input type="radio" name="type_chambre" value="suite">
+                  <div class="room-card-body">
+                    <span class="room-emoji">✨</span>
+                    <span class="room-name">Suite</span>
+                    <span class="room-price">150 DT / adulte / nuit</span>
+                    <span class="room-price-child">75 DT / enfant / nuit</span>
+                  </div>
+                </label>
+              </div>
+              <span class="field-error" id="err-room"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="adultes">Adultes</label>
+              <div class="input-wrap counter-wrap">
+                <button type="button" class="counter-btn" onclick="adjustCounter('adultes',-1)">−</button>
+                <input type="number" id="adultes" name="adultes" value="1" min="1" max="4" required readonly>
+                <button type="button" class="counter-btn" onclick="adjustCounter('adultes',1)">+</button>
+              </div>
+              <span class="field-hint">Minimum 1 adulte</span>
+              <span class="field-error" id="err-adultes"></span>
+            </div>
+
+            <div class="field-group">
+              <label for="enfants">Enfants</label>
+              <div class="input-wrap counter-wrap">
+                <button type="button" class="counter-btn" onclick="adjustCounter('enfants',-1)">−</button>
+                <input type="number" id="enfants" name="enfants" value="0" min="0" max="4" required readonly>
+                <button type="button" class="counter-btn" onclick="adjustCounter('enfants',1)">+</button>
+              </div>
+              <span class="field-hint">Total max. 4 personnes</span>
+              <span class="field-error" id="err-enfants"></span>
+            </div>
+          </div>
+
+          <div class="section-nav">
+            <button type="button" class="btn-prev" onclick="prevSection(2)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Retour
+            </button>
+            <button type="button" class="btn-next" onclick="nextSection(2)">
+              Continuer
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- ══════════════ SECTION 3 ══════════════ -->
+        <section class="form-section" id="section-3">
+          <div class="section-label">
+            <span class="section-number">03</span>
+            <span class="section-title">Pension &amp; Paiement</span>
+          </div>
+
+          <div class="fields-grid">
+
+            <div class="field-group full">
+              <label>Formule pension</label>
+              <div class="pension-options">
+                <label class="pension-card">
+                  <input type="radio" name="pension" value="petit_dejeuner" required>
+                  <div class="option-card-body">
+                    <span class="opt-icon">☕</span>
+                    <span class="opt-name">Petit déjeuner</span>
+                    <span class="opt-price">+15 DT / pers / nuit</span>
+                  </div>
+                </label>
+                <label class="pension-card">
+                  <input type="radio" name="pension" value="demi_pension">
+                  <div class="option-card-body">
+                    <span class="opt-icon">🥗</span>
+                    <span class="opt-name">Demi-pension</span>
+                    <span class="opt-price">+30 DT / pers / nuit</span>
+                  </div>
+                </label>
+                <label class="pension-card">
+                  <input type="radio" name="pension" value="complete">
+                  <div class="option-card-body">
+                    <span class="opt-icon">🍽</span>
+                    <span class="opt-name">Pension complète</span>
+                    <span class="opt-price">+40 DT / pers / nuit</span>
+                  </div>
+                </label>
+              </div>
+              <span class="field-error" id="err-pension"></span>
+            </div>
+
+            <div class="field-group full">
+              <label>Moyen de paiement</label>
+              <div class="payment-options">
+                <label class="payment-card">
+                  <input type="radio" name="paiement" value="espece" required>
+                  <div class="option-card-body">
+                    <span class="opt-icon">💵</span>
+                    <span class="opt-name">Espèce</span>
+                    <span class="opt-price">À l'hôtel</span>
+                  </div>
+                </label>
+                <label class="payment-card">
+                  <input type="radio" name="paiement" value="carte">
+                  <div class="option-card-body">
+                    <span class="opt-icon">💳</span>
+                    <span class="opt-name">Carte bancaire</span>
+                    <span class="opt-price">Visa / Mastercard</span>
+                  </div>
+                </label>
+                <label class="payment-card">
+                  <input type="radio" name="paiement" value="paypal">
+                  <div class="option-card-body">
+                    <span class="opt-icon">🅿</span>
+                    <span class="opt-name">PayPal</span>
+                    <span class="opt-price">Paiement sécurisé</span>
+                  </div>
+                </label>
+              </div>
+              <span class="field-error" id="err-paiement"></span>
+            </div>
+
+            <!-- Champs carte -->
+            <div class="field-group full card-fields hidden" id="cardFields">
+              <div class="payment-form-box">
+                <p class="pfb-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  Informations de carte
+                </p>
+                <div class="fields-grid">
+                  <div class="field-group full">
+                    <label for="card_number">Numéro de carte</label>
+                    <div class="input-wrap">
+                      <input type="text" id="card_number" name="card_number" placeholder="1234  5678  9012  3456" maxlength="19">
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label for="card_expiry">Expiration</label>
+                    <div class="input-wrap">
+                      <input type="text" id="card_expiry" name="card_expiry" placeholder="MM/AA" maxlength="5">
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label for="card_cvv">CVV</label>
+                    <div class="input-wrap">
+                      <input type="text" id="card_cvv" name="card_cvv" placeholder="123" maxlength="3">
+                    </div>
+                  </div>
+                  <div class="field-group full">
+                    <label for="card_name">Nom sur la carte</label>
+                    <div class="input-wrap">
+                      <input type="text" id="card_name" name="card_name" placeholder="JEAN DUPONT">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Champs PayPal -->
+            <div class="field-group full paypal-fields hidden" id="paypalFields">
+              <div class="payment-form-box paypal-box">
+                <p class="pfb-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  Connexion PayPal
+                </p>
+                <div class="field-group full">
+                  <label for="paypal_email">Email PayPal</label>
+                  <div class="input-wrap">
+                    <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <input type="email" id="paypal_email" name="paypal_email" placeholder="votre@paypal.com">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ── RÉCAPITULATIF ── -->
+          <div class="price-summary" id="priceSummary">
+            <p class="summary-title">Récapitulatif du séjour</p>
+            <div id="summaryRows">
+              <p class="summary-placeholder">Complétez le formulaire pour voir l'estimation.</p>
+            </div>
+            <div class="summary-total hidden" id="summaryTotal">
+              <span>Total estimé</span>
+              <strong id="totalDisplay">— DT</strong>
+            </div>
+          </div>
+
+          <div class="section-nav">
+            <button type="button" class="btn-prev" onclick="prevSection(3)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Retour
+            </button>
+            <button type="button" class="btn-next" onclick="nextSection(3)">
+              Voir la facture
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- ══════════════ SECTION 4 — FACTURE ══════════════ -->
+        <section class="form-section" id="section-4">
+          <div class="section-label">
+            <span class="section-number">04</span>
+            <span class="section-title">Facture de réservation</span>
+          </div>
+
+          <!-- INVOICE BLOCK -->
+          <div class="invoice-wrapper" id="invoiceWrapper">
+
+            <div class="invoice" id="invoicePrint">
+
+              <!-- Invoice Header -->
+              <div class="invoice-header">
+                <div class="invoice-brand">
+                  <div class="invoice-logo">
+                    <span class="inv-logo-star">✦</span>
+                    <span class="inv-logo-text">Grand Hôtel</span>
+                  </div>
+                  <p class="invoice-tagline">Luxe · Confort · Excellence</p>
+                  <p class="invoice-address">Avenue de la République, Tunis 1000<br>Tél : +216 71 000 000 · contact@grandhotel.tn</p>
+                </div>
+                <div class="invoice-meta">
+                  <div class="invoice-badge">FACTURE</div>
+                  <p class="invoice-num">N° <span id="inv-number">—</span></p>
+                  <p class="invoice-date">Émise le <span id="inv-date">—</span></p>
+                  <div class="invoice-status-badge">
+                    <span class="status-dot"></span>
+                    En attente de paiement
+                  </div>
+                </div>
+              </div>
+
+              <div class="invoice-divider"></div>
+
+              <!-- Client + Séjour info -->
+              <div class="invoice-info-row">
+                <div class="invoice-info-block">
+                  <p class="inv-block-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Client
+                  </p>
+                  <p class="inv-name" id="inv-nom">—</p>
+                  <p class="inv-detail" id="inv-email">—</p>
+                  <p class="inv-detail" id="inv-tel">—</p>
+                </div>
+                <div class="invoice-info-block">
+                  <p class="inv-block-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Séjour
+                  </p>
+                  <p class="inv-detail"><span class="inv-label">Arrivée :</span> <span id="inv-arrivee">—</span></p>
+                  <p class="inv-detail"><span class="inv-label">Départ :</span> <span id="inv-depart">—</span></p>
+                  <p class="inv-detail"><span class="inv-label">Durée :</span> <span id="inv-duree">—</span></p>
+                  <p class="inv-detail"><span class="inv-label">Occupants :</span> <span id="inv-occupants">—</span></p>
+                </div>
+                <div class="invoice-info-block">
+                  <p class="inv-block-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Paiement
+                  </p>
+                  <p class="inv-detail"><span class="inv-label">Mode :</span> <span id="inv-paiement">—</span></p>
+                  <p class="inv-detail"><span class="inv-label">Statut :</span> <span class="inv-status">En attente</span></p>
+                </div>
+              </div>
+
+              <div class="invoice-divider"></div>
+
+              <!-- Line items table -->
+              <table class="invoice-table">
+                <thead>
+                  <tr>
+                    <th>Désignation</th>
+                    <th>Unité</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceTableBody">
+                  <!-- filled by JS -->
+                </tbody>
+              </table>
+
+              <div class="invoice-divider"></div>
+
+              <!-- Totals -->
+              <div class="invoice-totals">
+                <div class="inv-total-row">
+                  <span>Sous-total hébergement</span>
+                  <span id="inv-subtotal-room">— DT</span>
+                </div>
+                <div class="inv-total-row" id="inv-pension-row">
+                  <span>Pension</span>
+                  <span id="inv-subtotal-pension">— DT</span>
+                </div>
+                <div class="inv-total-row inv-tva-row">
+                  <span>TVA (0%)</span>
+                  <span>0 DT</span>
+                </div>
+                <div class="inv-grand-total">
+                  <span>Montant total</span>
+                  <strong id="inv-total">— DT</strong>
+                </div>
+              </div>
+
+              <!-- Footer note -->
+              <div class="invoice-footer-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Cette facture est générée automatiquement et constitue un justificatif de votre réservation. Le paiement sera encaissé à l'arrivée sauf indication contraire.
+              </div>
+
+            </div><!-- /invoicePrint -->
+
+          </div><!-- /invoiceWrapper -->
+
+          <!-- Export Buttons -->
+          <div class="invoice-actions">
+            <button type="button" class="btn-export btn-print" onclick="printInvoice()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Imprimer
+            </button>
+            <button type="button" class="btn-export btn-pdf" onclick="exportPDF()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Exporter PDF
+            </button>
+          </div>
+
+          <div class="section-nav">
+            <button type="button" class="btn-prev" onclick="prevSection(4)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Retour
+            </button>
+            <button type="submit" class="btn-submit" id="submitBtn">
+              <span>Confirmer la réservation</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+          </div>
+        </section>
+
+      </form>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2025 Grand Hôtel &nbsp;·&nbsp; Tous droits réservés</p>
+    </footer>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="reserver.js"></script>
+</body>
+</html>
