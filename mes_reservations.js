@@ -354,14 +354,62 @@
   }
 
   function calcLoyaltyFromReservations() {
-    const done = allReservations.filter(r =>
-      ['Terminée','Complétée','Checked-out','Completé','Completed'].includes(normalizeStatus(r.status || r.Status))
-    ).length;
+    const paliers = [
+      { label: 'Bronze',   min: 0,   max: 49,       next: 'Silver',   nextMin: 50  },
+      { label: 'Silver',   min: 50,  max: 99,       next: 'Gold',     nextMin: 100 },
+      { label: 'Gold',     min: 100, max: 199,      next: 'Platinum', nextMin: 200 },
+      { label: 'Platinum', min: 200, max: 399,      next: 'Diamond',  nextMin: 400 },
+      { label: 'Diamond',  min: 400, max: Infinity, next: null,       nextMin: null },
+    ];
 
-    if (done >= 10) return { status: 'Platinum', sub: 'Membre privilégié', pts: done * 120, next: null,    nextPts: 0,   pct: 100 };
-    if (done >= 5)  return { status: 'Gold',     sub: 'Client fidèle',     pts: done * 100, next: 'Platinum', nextPts: 10 * 120, pct: Math.round((done / 10) * 100) };
-    if (done >= 2)  return { status: 'Silver',   sub: 'Client régulier',   pts: done * 80,  next: 'Gold',     nextPts: 5 * 100,  pct: Math.round((done / 5)  * 100) };
-    return             { status: 'Bronze',   sub: 'Nouveau client',    pts: done * 50,  next: 'Silver',   nextPts: 2 * 80,   pct: Math.round((done / 2)  * 100) };
+    let totalNights = 0;
+    let totalSpent  = 0;
+    let nbStays     = 0;
+
+    allReservations.forEach(r => {
+      const statusKey = String(r.status || r.Status || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const paymentKey = String(r.paymentDetails || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      if (['cancelled', 'canceled', 'annule', 'annulee', 'en attente'].includes(statusKey)) return;
+
+      const price = parseFloat(r.totalPrice) || 0;
+      const amount = paymentKey.includes('paye le') || paymentKey.includes('paid')
+        ? price
+        : ['checked_in', 'checked in', 'checked_out', 'checked out', 'complete', 'completed', 'completee', 'complet'].includes(statusKey)
+        ? price
+        : ['confirmee', 'confirmed'].includes(statusKey)
+          ? price * 0.30
+          : 0;
+
+      if (amount === 0) return;
+
+      totalSpent  += amount;
+      totalNights += calcNights(r.checkInDate, r.checkOutDate);
+      nbStays++;
+    });
+
+    const pts = Math.round(totalNights * 5 + (totalSpent / 50) + nbStays * 10);
+    const palier = paliers.find(p => pts >= p.min && pts <= p.max) || paliers[0];
+    const progress = palier.nextMin
+      ? Math.min(100, Math.round(((pts - palier.min) / (palier.nextMin - palier.min)) * 100))
+      : 100;
+
+    return {
+      status: palier.label,
+      sub: palier.next ? `${pts} pts - prochain: ${palier.next}` : `${pts} pts - niveau maximum`,
+      pts,
+      next: palier.next,
+      nextPts: palier.nextMin,
+      pct: progress,
+    };
   }
 
   function injectLoyaltyCard(loyalty) {
@@ -385,6 +433,8 @@
       Gold:     ['Surclassement offert', 'Spa -15%', 'Remise 10%'],
       Platinum: ['Suite garantie', 'Transfert offert', 'Spa gratuit', 'Remise 20%'],
     };
+
+    perks.Diamond = ['Butler dédié', 'Surclassement automatique', 'Transfert aéroport inclus', 'Services premium offerts'];
 
     if (perksEl) {
       const list = perks[loyalty.status] || [];
@@ -476,27 +526,45 @@
   /* ─────────────────────────────────────────
      SHOW / HIDE SECTION
   ───────────────────────────────────────── */
-  function show() {
-    document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
-      el._prev = el.style.display;
-      el.style.display = 'none';
-    });
-    const sec = document.getElementById('reservationsSection');
-    if (sec) sec.classList.add('active');
-
-    allReservations = Array.isArray(window.RESERVATIONS) ? window.RESERVATIONS : [];
-    renderSummary();
-    renderCards();
-    updateTabCounts();
+function show() {
+  const roomsSection = document.getElementById('roomsSection');
+  if (roomsSection) {
+    roomsSection.style.display = 'none';
+    roomsSection.classList.remove('active');
   }
 
-  function hide() {
-    document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
-      el.style.display = el._prev !== undefined ? el._prev : '';
-    });
-    const sec = document.getElementById('reservationsSection');
-    if (sec) sec.classList.remove('active');
+  document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
+    // Ne pas sauvegarder 'none' comme état de retour
+    const current = el.style.display;
+    el._prev = (current && current !== 'none') ? current : '';
+    el.style.display = 'none';
+  });
+
+  const sec = document.getElementById('reservationsSection');
+  if (sec) {
+    sec.style.display = 'flex';
+    sec.classList.add('active');
   }
+
+  allReservations = Array.isArray(window.RESERVATIONS) ? window.RESERVATIONS : [];
+  renderSummary();
+  renderCards();
+  updateTabCounts();
+}
+
+function hide() {
+  document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
+    el._nosChambresHidden = false;
+    // Si _prev vaut 'none' ou undefined, forcer '' pour bien afficher
+    el.style.display = (el._prev && el._prev !== 'none') ? el._prev : '';
+    el._prev = undefined;
+  });
+  const sec = document.getElementById('reservationsSection');
+  if (sec) {
+    sec.classList.remove('active');
+    sec.style.display = 'none';
+  }
+}
 
   /* ─────────────────────────────────────────
      FILTRES

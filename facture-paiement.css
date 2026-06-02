@@ -1,0 +1,672 @@
+/* ============================================
+   FACTURES & PAIEMENTS — Styles isolés
+   ============================================ */
+
+.factures-section {
+  display: none;
+  flex-direction: column;
+  gap: 28px;
+  animation: fadeUp .5s var(--ease) both;
+}
+
+.factures-section.active {
+  display: flex;
+}
+
+.factures-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.factures-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.factures-eyebrow {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.factures-title {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1;
+}
+
+.factures-title em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.factures-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.facture-summary-card {
+  background: var(--charcoal-2);
+  border: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 92px;
+  transition: border-color .25s, transform .25s;
+}
+
+.facture-summary-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.facture-summary-icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(201,168,76,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.facture-summary-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+  opacity: .75;
+}
+
+.facture-summary-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.facture-summary-val {
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1;
+}
+
+.factures-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.facture-filter {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-light);
+  padding: 9px 14px;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .2s;
+}
+
+.facture-filter span {
+  color: var(--gold);
+  font-size: 10px;
+}
+
+.facture-filter:hover,
+.facture-filter.active {
+  border-color: rgba(201,168,76,.5);
+  background: var(--gold-glow);
+  color: var(--gold);
+}
+
+.factures-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.factures-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.facture-card {
+  background: var(--charcoal-2);
+  border: 1px solid var(--border);
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  transition: border-color .25s, transform .25s;
+}
+
+.facture-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.facture-card-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.facture-doc-icon {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(201,168,76,.25);
+  background: rgba(201,168,76,.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.facture-doc-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--gold);
+  opacity: .75;
+}
+
+.facture-card-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.facture-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.facture-ref {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.facture-stay {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.facture-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.facture-card-meta span {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.facture-status {
+  border: 1px solid var(--border);
+  padding: 5px 9px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.facture-status--paid {
+  color: #86efac;
+  border-color: rgba(34,197,94,.28);
+  background: rgba(34,197,94,.08);
+}
+
+.facture-status--deposit {
+  color: var(--gold);
+  border-color: rgba(201,168,76,.35);
+  background: rgba(201,168,76,.08);
+}
+
+.facture-status--due {
+  color: #fbbf24;
+  border-color: rgba(251,191,36,.28);
+  background: rgba(251,191,36,.07);
+}
+
+.facture-status--cancelled {
+  color: #f87171;
+  border-color: rgba(239,68,68,.28);
+  background: rgba(239,68,68,.07);
+}
+
+.facture-card-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  min-width: 148px;
+}
+
+.facture-amount {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1;
+}
+
+.facture-due {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.facture-pay-btn {
+  border: 1px solid rgba(34,197,94,.35);
+  background: rgba(34,197,94,.08);
+  color: #86efac;
+  padding: 8px 14px;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all .2s;
+  min-width: 108px;
+}
+
+.facture-pay-btn:hover {
+  border-color: rgba(34,197,94,.65);
+  background: rgba(34,197,94,.14);
+}
+
+.facture-pay-btn svg {
+  flex-shrink: 0;
+}
+
+.paiements-panel {
+  background: var(--charcoal-2);
+  border: 1px solid var(--border);
+  padding: 24px;
+  position: sticky;
+  top: 24px;
+}
+
+.paiements-panel-header h3 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--white);
+  margin-top: 6px;
+  margin-bottom: 18px;
+}
+
+.paiements-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paiement-method {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.025);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.paiement-method span {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.paiement-method strong {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--gold);
+}
+
+.paiement-method--empty span {
+  color: var(--muted);
+}
+
+.paiements-note {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.paiements-note span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.paiements-note strong {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--white);
+}
+
+.factures-empty {
+  background: var(--charcoal-2);
+  border: 1px solid var(--border);
+  padding: 38px 24px;
+  text-align: center;
+}
+
+.factures-empty-title {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--white);
+}
+
+.factures-empty-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 18px;
+}
+
+/* ============================================
+   MODALE PAIEMENT FACTURE
+   ============================================ */
+.facture-pay-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(5px);
+  z-index: 1300;
+}
+
+.facture-pay-overlay.open {
+  display: block;
+}
+
+.facture-pay-modal {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: var(--charcoal-2);
+  border: 1px solid var(--border-hover);
+  z-index: 1301;
+  box-shadow: var(--shadow-lg);
+}
+
+.facture-pay-modal.open {
+  display: block;
+}
+
+.facture-pay-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.facture-pay-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--white);
+  margin-top: 4px;
+}
+
+.facture-pay-ref {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.facture-pay-amount {
+  margin: 22px 26px 18px;
+  border: 1px solid rgba(201,168,76,.28);
+  background: rgba(201,168,76,.06);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.facture-pay-amount span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.facture-pay-amount strong {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--gold);
+}
+
+.facture-pay-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 26px 18px;
+}
+
+.facture-pay-card {
+  cursor: pointer;
+}
+
+.facture-pay-card input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.facture-pay-card-body {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.025);
+  min-height: 106px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  transition: all .2s;
+}
+
+.facture-pay-card:hover .facture-pay-card-body,
+.facture-pay-card input:checked ~ .facture-pay-card-body {
+  border-color: rgba(201,168,76,.55);
+  background: rgba(201,168,76,.08);
+  transform: translateY(-2px);
+}
+
+.facture-pay-icon {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(201,168,76,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 14px;
+}
+
+.facture-pay-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.facture-pay-name {
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.facture-pay-sub {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.facture-pay-fields {
+  margin: 0 26px 18px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.025);
+  padding: 18px;
+}
+
+.facture-pay-fields--paypal {
+  border-color: rgba(96,165,250,.24);
+  background: rgba(96,165,250,.06);
+}
+
+.facture-pay-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.facture-pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.facture-pay-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.facture-pay-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.facture-pay-field label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.facture-pay-field input {
+  border: 1px solid var(--border);
+  background: var(--charcoal-3);
+  color: var(--white);
+  padding: 11px 12px;
+  font-family: var(--sans);
+  font-size: 12px;
+  outline: none;
+  transition: border-color .2s, background .2s;
+}
+
+.facture-pay-field input:focus {
+  border-color: rgba(201,168,76,.55);
+  background: var(--charcoal-4);
+}
+
+.facture-pay-error {
+  display: none;
+  margin: 0 26px 18px;
+  border: 1px solid rgba(239,68,68,.28);
+  background: rgba(239,68,68,.08);
+  color: #f87171;
+  padding: 11px 14px;
+  font-size: 12px;
+}
+
+.facture-pay-error.visible {
+  display: block;
+}
+
+.facture-pay-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 26px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1100px) {
+  .factures-summary { grid-template-columns: repeat(2, 1fr); }
+  .factures-layout { grid-template-columns: 1fr; }
+  .paiements-panel { position: static; }
+}
+
+@media (max-width: 860px) {
+  .facture-card { grid-template-columns: 1fr; }
+  .facture-card-aside { align-items: flex-start; }
+  .facture-pay-options { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .factures-summary { grid-template-columns: 1fr; }
+  .factures-filters { gap: 6px; }
+  .factures-title { font-size: 28px; }
+  .facture-filter { font-size: 9px; padding: 7px 11px; }
+  .facture-card-main { align-items: flex-start; }
+  .facture-card-top { flex-direction: column; }
+  .facture-pay-grid { grid-template-columns: 1fr; }
+  .facture-pay-amount { align-items: flex-start; flex-direction: column; }
+  .facture-pay-footer { flex-direction: column-reverse; }
+  .facture-pay-footer button { width: 100%; justify-content: center; }
+}

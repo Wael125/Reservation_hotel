@@ -1,6 +1,6 @@
 /**
  * bi_widget.js  —  Business Intelligence Widget v3 (Ollama/DeepSeek)
- * Compatible avec kpi.html / kpi.js (showView, LOGIN_ID, Chart.js)
+ * Compatible avec dashboard_admin.html / dashboard_admin.js (showView, LOGIN_ID, Chart.js)
  */
 
 (function () {

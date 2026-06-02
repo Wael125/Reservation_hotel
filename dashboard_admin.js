@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   HOTEL DASHBOARD — kpi.js
+   HOTEL DASHBOARD — dashboard_admin.js
    Navigation + KPI + Modal Admin + Chatbot
    Réservations → gestion_reservation.js
    Clients      → gestion_clients.js
@@ -17,8 +17,8 @@ const _port = window.location.port;
 const _isLiveServer = _port === '3000' || _port === '5500' || _port === '5501';
 
 const API = _isLiveServer
-  ? 'http://localhost/reservation_hotel/kpi.php?action=all'
-  : 'kpi.php?action=all';
+  ? 'http://localhost/reservation_hotel/dashboard_admin.php?action=all'
+  : 'dashboard_admin.php?action=all';
 
 const LOGIN_URL = _isLiveServer
   ? 'http://localhost/reservation_hotel/login.html'
@@ -32,7 +32,7 @@ if (_loginLink) _loginLink.href = LOGIN_URL;
 // ══════════════════════════════════════════════════════════
 
 const VIEW_META = {
-  dashboard:    { title: 'Dashboard KPI',            breadcrumb: "Aperçu global de l'établissement"      },
+  dashboard:    { title: 'Dashboard Admin',          breadcrumb: "Aperçu global de l'établissement"      },
   reservations: { title: 'Gestion des Réservations', breadcrumb: 'Réservations actives'                  },
   clients:      { title: 'Gestion des Clients',      breadcrumb: 'Liste et gestion de la clientèle'      },
   chambres:     { title: 'Gestion des Chambres',     breadcrumb: 'Disponibilité et tarifs des chambres'  },
@@ -441,7 +441,7 @@ async function loadDashboard() {
     setEl('lastUpdated', `Mis à jour : ${new Date().toLocaleTimeString('fr-FR')}`);
 
   } catch (err) {
-    console.error('[KPI]', err);
+    console.error('[Dashboard Admin]', err);
     showError(`Impossible de charger les données : ${err.message}`);
     setEl('lastUpdated', 'Erreur de chargement');
   } finally {
@@ -587,6 +587,122 @@ async function send() {
 }
 
 // ══════════════════════════════════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════════════════════════════════
+
+let notificationsData = { reclamations: [], clients: [], reservations: [] };
+let lastNotificationTime = new Date().toISOString();
+
+function getTimeAgo(dateStr) {
+  if (!dateStr) return 'Il y a peu';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'À l\'instant';
+  if (diffMins < 60) return `Il y a ${diffMins}m`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  return `Il y a ${diffDays}j`;
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('dashboard_admin.php?action=notifications', { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) return;
+    
+    const data = await res.json();
+    notificationsData = data;
+    updateNotificationBell();
+  } catch (err) {
+    console.error('[Notifications]', err);
+  }
+}
+
+function updateNotificationBell() {
+  const totalNotifs = (notificationsData.reclamations?.length || 0) +
+                      (notificationsData.clients?.length || 0) +
+                      (notificationsData.reservations?.length || 0);
+  
+  const badge = document.getElementById('notificationBadge');
+  if (badge) {
+    if (totalNotifs > 0) {
+      badge.textContent = totalNotifs > 99 ? '99+' : totalNotifs;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  
+  renderNotificationList();
+}
+
+function renderNotificationList() {
+  const list = document.getElementById('notificationList');
+  if (!list) return;
+  
+  const items = [];
+  
+  // Réclamations
+  (notificationsData.reclamations || []).forEach(rec => {
+    items.push({
+      type: 'reclamation',
+      title: `Réclamation #${rec.id}`,
+      text: `${rec.clientName || 'Client'} - Priorité: ${rec.priorite}`,
+      time: rec.created_at,
+      timestamp: new Date(rec.created_at).getTime(),
+    });
+  });
+  
+  // Clients
+  (notificationsData.clients || []).forEach(client => {
+    items.push({
+      type: 'client',
+      title: `Nouveau client`,
+      text: `${client.firstName} ${client.lastName}`,
+      time: client.created_at,
+      timestamp: new Date(client.created_at).getTime(),
+    });
+  });
+  
+  // Réservations
+  (notificationsData.reservations || []).forEach(res => {
+    items.push({
+      type: 'reservation',
+      title: `Réservation #${res.id}`,
+      text: `${res.clientName} - ${res.roomType}`,
+      time: res.createdAt,
+      timestamp: new Date(res.createdAt).getTime(),
+    });
+  });
+  
+  // Trier par date décroissante
+  items.sort((a, b) => b.timestamp - a.timestamp);
+  
+  if (!items.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.82rem">Aucune notification</div>';
+    return;
+  }
+  
+  list.innerHTML = items.map(item => `
+    <div class="notification-item new">
+      <div class="notification-item-type ${item.type}">${item.type === 'reclamation' ? '⚠️ Réclamation' : item.type === 'client' ? '👤 Client' : '📅 Réservation'}</div>
+      <div class="notification-item-text"><strong>${item.title}</strong></div>
+      <div class="notification-item-text">${item.text}</div>
+      <div class="notification-item-time">${getTimeAgo(item.time)}</div>
+    </div>
+  `).join('');
+}
+
+function toggleNotificationDropdown() {
+  const dropdown = document.getElementById('notificationDropdown');
+  if (!dropdown) return;
+  dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════
 
@@ -607,6 +723,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.key === 'Enter') send();
   });
 
+  document.getElementById('btnNotificationBell')?.addEventListener('click', toggleNotificationDropdown);
+  
+  // Fermer le dropdown quand on clique ailleurs
+  document.addEventListener('click', function(e) {
+    const bell = document.getElementById('btnNotificationBell');
+    const dropdown = document.getElementById('notificationDropdown');
+    if (!bell?.contains(e.target) && !dropdown?.contains(e.target)) {
+      if (dropdown) dropdown.style.display = 'none';
+    }
+  });
+
   initClientsView();
   initReservationsView();
   initChambresView();
@@ -614,5 +741,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initTransitionsPanel();
 
   loadDashboard();
+  loadNotifications();
   setInterval(loadDashboard, 60_000);
+  setInterval(loadNotifications, 30_000);
 });

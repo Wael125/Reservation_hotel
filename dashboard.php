@@ -37,6 +37,9 @@ if ($customer_id) {
     $stmtDesc = $pdo->prepare("
         SELECT
             id,
+            clientName,
+            email,
+            phoneNumber,
             roomType,
             roomNumber,
             checkInDate,
@@ -44,6 +47,7 @@ if ($customer_id) {
             numberOfAdults,
             numberOfChildren,
             pension,
+            paymentDetails,
             totalPrice,
             Status AS status
         FROM reservation
@@ -57,6 +61,9 @@ if ($customer_id) {
     $stmtAsc = $pdo->prepare("
         SELECT
             id,
+            clientName,
+            email,
+            phoneNumber,
             roomType,
             roomNumber,
             checkInDate,
@@ -64,6 +71,7 @@ if ($customer_id) {
             numberOfAdults,
             numberOfChildren,
             pension,
+            paymentDetails,
             totalPrice,
             Status AS status
         FROM reservation
@@ -78,13 +86,22 @@ if ($customer_id) {
 
     foreach ($reservationsAsc as $r) {
         $status = strtolower(trim($r['status']));
+        $paymentDetails = strtolower(trim($r['paymentDetails'] ?? ''));
+        $isPaidInvoice = strpos($paymentDetails, 'payé le') !== false
+            || strpos($paymentDetails, 'paye le') !== false
+            || strpos($paymentDetails, 'paid') !== false;
 
-        // Total dépensé : hors annulées
-        if ($status !== 'cancelled' && $status !== 'annulé' && $status !== 'annule') {
+        // ── Total dépensé ─────────────────────────────────────────────────────
+        // 100% si Checked_in / Checked_out / Completé
+        // 30%  si Confirmée (acompte versé)
+        // 0%   tout le reste (En attente, Annulé…)
+        if ($isPaidInvoice || in_array($status, ['checked_in', 'checked_out', 'completé', 'complete', 'complété', 'complétée'], true)) {
             $stats['totalSpent'] += floatval($r['totalPrice']);
+        } elseif ($status === 'confirmée' || $status === 'confirmee') {
+            $stats['totalSpent'] += floatval($r['totalPrice']) * 0.30;
         }
 
-        // Prochain séjour :
+        // ── Prochain séjour ───────────────────────────────────────────────────
         //   • checkInDate >= aujourd'hui
         //   • status En attente ou Confirmée
         //   • NON annulé
@@ -92,11 +109,8 @@ if ($customer_id) {
         if (
             $stats['nextStay'] === null
             && strtotime($r['checkInDate']) >= strtotime('today')
-            && in_array($status, ['en attente', 'confirmée'], true)
-            && $status !== 'cancelled'
-            && $status !== 'annulé'
-            && $status !== 'annule'
-            && $status !== 'checked_in'
+            && in_array($status, ['en attente', 'confirmée', 'confirmee'], true)
+            && !in_array($status, ['cancelled', 'annulé', 'annule', 'checked_in'], true)
         ) {
             $stats['nextStay'] = $r;
         }

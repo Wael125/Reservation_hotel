@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hotel Dashboard — KPIs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="dashboard_admin.css">
+<link rel="stylesheet" href="gestion_clients.css">
+<link rel="stylesheet" href="gestion_reservation.css">
+<link rel="stylesheet" href="gestion_chambres.css">
+<link rel="stylesheet" href="gestion_historique.css">
+<link rel="stylesheet" href="prediction.css">
+<link rel="stylesheet" href="gestion_reclamation.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Chargement des données…</p>
+</div>
+
+<!-- MODAL NEW ADMIN -->
+<div id="newAdminModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>➕ Créer un nouveau compte Admin</h2>
+      <button class="close-btn" onclick="closeNewAdminModal()">&times;</button>
+    </div>
+    <div class="success-msg" id="successMsg">✅ Compte admin créé avec succès !</div>
+    <form id="newAdminForm" onsubmit="return validateAndCreateAdmin(event)">
+      <div class="form-group">
+        <label for="newAdminUsername">👤 Nom d'utilisateur</label>
+        <input type="text" id="newAdminUsername" placeholder="ex: admin2" required>
+        <div class="error-msg" id="usernameError"></div>
+      </div>
+      <div class="form-group">
+        <label for="newAdminPassword">🔐 Mot de passe</label>
+        <input type="password" id="newAdminPassword" placeholder="Minimum 6 caractères" required>
+        <div class="error-msg" id="passwordError"></div>
+      </div>
+      <div class="form-group">
+        <label for="newAdminConfirmPassword">🔐 Confirmer le mot de passe</label>
+        <input type="password" id="newAdminConfirmPassword" placeholder="Retapez le mot de passe" required>
+        <div class="error-msg" id="confirmPasswordError"></div>
+      </div>
+      <div class="form-group">
+        <label for="newAdminRole">👑 Rôle</label>
+        <input type="text" id="newAdminRole" value="admin" readonly
+          style="background:rgba(255,255,255,.03);cursor:not-allowed;color:var(--text-muted)">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel-modal" onclick="closeNewAdminModal()">Annuler</button>
+        <button type="submit" class="btn-create" id="submitBtn">Créer Admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= CHAT ICON ================= -->
+<div class="chat-icon" onclick="toggleChat()">🤖</div>
+<div class="chat-welcome" id="welcomeOutside">
+  👋 Bienvenue <span id="welcomeAdminName"></span><br>💬 Comment puis-je vous aider ?
+</div>
+
+<!-- ================= CHATBOT WINDOW ================= -->
+<div class="chat-container" id="chatContainer">
+  <div class="header">🏨 Chatbot Hôtel IA</div>
+  <div id="chatBox" class="chat-box"></div>
+  <div class="input-area">
+    <input type="text" id="msg" placeholder="Écris un message...">
+    <button onclick="send()">➤</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      HôtelPro
+    </div>
+    <div class="sub">Management</div>
+  </div>
+
+  <div class="sidebar-admin">
+    <div class="sidebar-admin-avatar">👤</div>
+    <div>
+      <div class="sidebar-admin-name" id="adminName">Admin</div>
+      <div class="sidebar-admin-role">Administrateur</div>
+    </div>
+  </div>
+
+  <button class="btn-new-admin-sidebar" onclick="openNewAdminModal()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Nouveau Admin
+  </button>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+    <button class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Dashboard KPI
+    </button>
+    <button class="nav-item" id="nav-clients" onclick="showView('clients')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      Clients
+    </button>
+    <button class="nav-item" id="nav-reservations" onclick="showView('reservations')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+      </svg>
+      Réservations
+    </button>
+    <button class="nav-item" id="nav-chambres" onclick="showView('chambres')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M3 9h18M3 9v10a2 2 0 002 2h14a2 2 0 002-2V9"/>
+      </svg>
+      Chambres
+    </button>
+
+    <!-- ═══ NOUVEAU : Réclamations ═══ -->
+    <button class="nav-item" id="nav-reclamations" onclick="showView('reclamations')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Réclamations
+    </button>
+
+    <div class="nav-label">Rapports</div>
+    <button class="nav-item" id="nav-stats" onclick="showView('stats')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      Statistiques
+    </button>
+    <button class="nav-item" id="nav-historique" onclick="showView('historique')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Historique
+    </button>
+    <button class="nav-item" id="nav-predictions" onclick="showView('predictions')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Prédictions
+    </button>
+  </nav>
+
+  <div class="sidebar-footer" id="lastUpdated">—</div>
+  <button class="btn-logout-sidebar" onclick="logout()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Déconnexion
+  </button>
+</aside>
+
+<!-- MAIN -->
+<div class="main-wrapper">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 id="topbarTitle">Dashboard KPI</h1>
+      <div class="breadcrumb" id="topbarBreadcrumb">Aperçu global de l'établissement</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="currentDate">—</div>
+      <button class="btn-refresh" id="btnRefresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+        </svg>
+        Actualiser
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="session-banner" id="sessionBanner">
+      <span>Session expirée ou accès refusé.</span>
+      <a href="login.html" id="loginLink">Se reconnecter →</a>
+    </div>
+    <div class="error-banner" id="errorBanner"></div>
+
+    <!-- ══════ VIEW: DASHBOARD KPI ══════ -->
+    <div class="view-section active" id="view-dashboard">
+      <div class="section-title">Indicateurs clés</div>
+      <div class="kpi-grid">
+        <div class="kpi-card gold">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Total Réservations</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-total-res">—</div>
+          <div class="kpi-sub">Toutes périodes confondues</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Chiffre d'affaires</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-revenue">—</div>
+          <div class="kpi-sub">Hors annulations</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Clients</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-customers">—</div>
+          <div class="kpi-sub">Clients enregistrés</div>
+        </div>
+        <div class="kpi-card violet">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Arrivées aujourd'hui</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-today">—</div>
+          <div class="kpi-sub" id="kpi-checkin-sub">Check-in du jour</div>
+          <div class="occ-bar-wrap">
+            <div class="occ-bar-fill" id="checkinBar" style="width:0%;background:var(--violet)"></div>
+          </div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Départs aujourd'hui</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 8 16 12 12 16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-today-checkout">—</div>
+          <div class="kpi-sub" id="kpi-checkout-sub">Check-out du jour</div>
+          <div class="occ-bar-wrap">
+            <div class="occ-bar-fill" id="checkoutBar" style="width:0%;background:var(--orange)"></div>
+          </div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-glow"></div>
+          <div class="kpi-header">
+            <span class="kpi-label">Taux d'occupation</span>
+            <span class="kpi-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M3 9h18M3 9v10a2 2 0 002 2h14a2 2 0 002-2V9"/>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-occ-rate">—</div>
+          <div class="kpi-sub" id="kpi-occ-detail">chambres occupées</div>
+          <div class="occ-bar-wrap">
+            <div class="occ-bar-fill" id="occBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Graphiques</div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Réservations / mois</span>
+            <span class="chart-badge gold">12 mois</span>
+          </div>
+          <div class="chart-area"><canvas id="chartRes"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Revenu / mois</span>
+            <span class="chart-badge teal">TND</span>
+          </div>
+          <div class="chart-area"><canvas id="chartRev"></canvas></div>
+        </div>
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <span class="chart-title">Répartition par type de chambre</span>
+            <span class="chart-badge violet">Distribution</span>
+          </div>
+          <div class="pie-wrap">
+            <div class="pie-canvas-wrap"><canvas id="chartOcc"></canvas></div>
+            <div class="pie-legend" id="occLegend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Détails</div>
+      <div class="bottom-grid">
+        <div class="table-card">
+          <div class="table-card-header">
+            <span class="chart-title">Dernières réservations</span>
+            <span class="chart-badge gold">8 récentes</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="res-table">
+              <thead>
+                <tr><th>ID</th><th>Client</th><th>Type</th><th>Chambre</th><th>Arrivée</th><th>Montant</th><th>Statut</th></tr>
+              </thead>
+              <tbody id="resTableBody">
+                <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="room-status-card">
+          <div class="chart-header" style="margin-bottom:18px">
+            <span class="chart-title">Occupation par type</span>
+            <span class="chart-badge teal">Live</span>
+          </div>
+          <div class="room-status-list" id="roomStatusList">
+            <div style="color:var(--text-muted);font-size:.82rem">Chargement…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ VIEW: RESERVATIONS ══════ -->
+    <div class="view-section" id="view-reservations">
+      <div class="res-view-header">
+        <div class="res-view-header-left">
+          <h2>Réservations</h2>
+          <span class="res-count-badge" id="resBadgeCount">—</span>
+        </div>
+        <button class="btn-add-res" id="btnAddReservation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nouvelle réservation
+        </button>
+      </div>
+      <div class="res-filters-card">
+        <div class="res-filters-title">Filtres</div>
+        <div class="res-filters-row">
+          <div class="res-filter-group">
+            <label>Recherche</label>
+            <input class="res-filter-input" id="resFilterSearch" type="text" placeholder="Nom, email…">
+          </div>
+          <div class="res-filter-group">
+            <label>Statut</label>
+            <select class="res-filter-select" id="resFilterStatus">
+              <option value="">Tous les statuts</option>
+            </select>
+          </div>
+          <div class="res-filter-group">
+            <label>Type de chambre</label>
+            <select class="res-filter-select" id="resFilterRoomType">
+              <option value="">Tous les types</option>
+            </select>
+          </div>
+          <div class="res-filter-group">
+            <label>Arrivée</label>
+            <div class="res-date-range">
+              <input class="res-filter-input" id="resFilterDateFrom" type="date">
+              <span>→</span>
+              <input class="res-filter-input" id="resFilterDateTo" type="date">
+            </div>
+          </div>
+          <div class="res-filter-group" style="justify-content:flex-end;align-self:flex-end;">
+            <button class="btn-res-reset" id="resBtnResetFilters">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="res-table-card" id="resTableContainer">
+        <div class="res-table-card-header">
+          <span class="rtitle">Liste des réservations</span>
+        </div>
+        <div class="res-table-scroll">
+          <div class="loading-msg" id="loadingMsgRes" style="display:none;padding:20px;">⏳ Chargement…</div>
+          <table class="res-full-table">
+            <thead>
+              <tr>
+                <th data-col="id">ID</th>
+                <th data-col="clientName">Client</th>
+                <th data-col="phoneNumber">Téléphone</th>
+                <th data-col="checkInDate">Dates</th>
+                <th data-col="roomType">Chambre</th>
+                <th data-col="numberOfAdults">Pers.</th>
+                <th data-col="totalPrice">Montant</th>
+                <th data-col="Status">Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="resTbody">
+              <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="res-modal-overlay" id="resFormModal">
+        <div class="res-modal-box">
+          <div class="res-modal-header">
+            <h3 id="resFormTitle">Nouvelle réservation</h3>
+            <button class="res-modal-close" id="resFormClose">&times;</button>
+          </div>
+          <input type="hidden" id="resFormId">
+          <div class="res-form-grid">
+            <div class="res-form-section">Informations client</div>
+            <div class="res-form-field">
+              <label>Nom complet <span class="req">*</span></label>
+              <input class="res-form-input" type="text" id="resFormClient" placeholder="Jean Dupont">
+            </div>
+            <div class="res-form-field">
+              <label>Email <span class="req">*</span></label>
+              <input class="res-form-input" type="email" id="resFormEmail" placeholder="jean@exemple.com">
+            </div>
+            <div class="res-form-field">
+              <label>Téléphone</label>
+              <input class="res-form-input" type="text" id="resFormPhone" placeholder="+216 XX XXX XXX">
+            </div>
+            <div class="res-form-field">
+              <label>Statut <span class="req">*</span></label>
+              <select class="res-form-select" id="resFormStatus">
+                <option value="En attente">⏳ En attente</option>
+                <option value="Confirmée">✅ Confirmée</option>
+                <option value="Annulé">❌ Annulé</option>
+                <option value="Checked_out">🚪 Checked out</option>
+              </select>
+            </div>
+            <div class="res-form-section">Séjour</div>
+            <div class="res-form-field">
+              <label>Arrivée <span class="req">*</span></label>
+              <input class="res-form-input" type="date" id="resFormCheckIn">
+            </div>
+            <div class="res-form-field">
+              <label>Départ <span class="req">*</span></label>
+              <input class="res-form-input" type="date" id="resFormCheckOut">
+            </div>
+            <div class="res-form-field">
+              <label>Type de chambre <span class="req">*</span></label>
+              <select class="res-form-select" id="resFormRoomType">
+                <option value="">— Choisir un type —</option>
+                <option value="Simple">Simple</option>
+                <option value="Double">Double</option>
+                <option value="Triple">Triple</option>
+                <option value="Suite">Suite</option>
+              </select>
+            </div>
+            <div class="res-form-field">
+              <label>Numéro de chambre <span class="req">*</span></label>
+              <select class="res-form-select" id="resFormRoomNumber" disabled>
+                <option value="">Choisissez les dates d'abord</option>
+              </select>
+              <span class="res-avail-hint" id="resFormRoomHint"></span>
+            </div>
+            <div class="res-form-field">
+              <label>Adultes</label>
+              <input class="res-form-input" type="number" id="resFormAdults" value="1" min="1" max="4">
+            </div>
+            <div class="res-form-field">
+              <label>Enfants</label>
+              <input class="res-form-input" type="number" id="resFormChildren" value="0" min="0" max="3">
+            </div>
+            <div class="res-form-section">Paiement &amp; Options</div>
+            <div class="res-form-field">
+              <label>Mode de paiement</label>
+              <select class="res-form-select" id="resFormPayment">
+                <option value="">— Choisir —</option>
+                <option value="Carte bancaire">💳 Carte bancaire</option>
+                <option value="Espèces">💵 Espèces</option>
+                <option value="Virement">🏦 Virement</option>
+                <option value="Chèque">📄 Chèque</option>
+              </select>
+            </div>
+            <div class="res-form-field">
+              <label>Pension</label>
+              <select class="res-form-select" id="resFormPension">
+                <option value="">— Choisir —</option>
+                <option value="Sans pension">🍽️ Sans pension</option>
+                <option value="Petit-déjeuner">☕ Petit-déjeuner</option>
+                <option value="Demi-pension">🍴 Demi-pension</option>
+                <option value="Pension complète">🍽️🍽️ Pension complète</option>
+                <option value="All inclusive">⭐ All inclusive</option>
+              </select>
+            </div>
+            <div class="res-form-field f-full">
+              <label>Prix total (TND) <span class="req">*</span></label>
+              <input class="res-form-input" type="number" id="resFormPrice" placeholder="0.00" min="0" step="1">
+            </div>
+          </div>
+          <div class="res-modal-actions">
+            <button class="res-btn-cancel" id="resFormCancel">Annuler</button>
+            <button class="res-btn-submit" id="resFormBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Créer
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="res-confirm-overlay" id="resConfirmModal">
+        <div class="res-confirm-box">
+          <div class="ci">🗑️</div>
+          <h4>Confirmer la suppression</h4>
+          <p id="resConfirmText">Cette action est irréversible.</p>
+          <div class="res-confirm-actions">
+            <button class="res-btn-cancel" id="resConfirmCancel">Annuler</button>
+            <button class="res-btn-del-confirm" id="resConfirmBtn">Supprimer</button>
+          </div>
+          <button class="res-modal-close" id="resConfirmClose" style="position:absolute;top:14px;right:16px">&times;</button>
+        </div>
+      </div>
+      <div class="res-toast" id="resGlobalToast"></div>
+    </div>
+
+    <!-- ══════ VIEW: CLIENTS ══════ -->
+    <div class="view-section" id="view-clients">
+      <div class="cli-view-header">
+        <div class="cli-view-header-left">
+          <h2>Clients</h2>
+          <span class="cli-count-badge" id="clientCount">—</span>
+        </div>
+        <button class="btn-add-cli" id="btnAddClient">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nouveau client
+        </button>
+      </div>
+      <div class="cli-filters-card">
+        <div class="cli-filters-title">Filtres</div>
+        <div class="cli-filters-row">
+          <div class="cli-filter-group">
+            <label>Nom, prénom ou email</label>
+            <input class="cli-filter-input" id="cliFilterSearch" type="text" placeholder="Rechercher…">
+          </div>
+          <div class="cli-filter-group">
+            <label>Genre</label>
+            <select class="cli-filter-select" id="cliFilterGenre">
+              <option value="">Tous</option>
+              <option value="Homme">♂ Homme</option>
+              <option value="Femme">♀ Femme</option>
+            </select>
+          </div>
+          <div class="cli-filter-group">
+            <label>Pays</label>
+            <input class="cli-filter-input" id="cliFilterPays" type="text" placeholder="Pays…" list="cliPaysFilterList">
+            <datalist id="cliPaysFilterList"></datalist>
+          </div>
+          <div class="cli-filter-group">
+            <label>Date de naissance</label>
+            <div class="cli-date-range">
+              <input class="cli-filter-input" id="cliFilterDateFrom" type="date">
+              <span>→</span>
+              <input class="cli-filter-input" id="cliFilterDateTo" type="date">
+            </div>
+          </div>
+          <div class="cli-filter-group">
+            <button class="btn-cli-reset" id="cliBtnResetFilters">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="cli-table-card">
+        <div class="cli-table-card-header">
+          <span class="ctitle">Liste des clients</span>
+        </div>
+        <div class="cli-table-scroll">
+          <table class="cli-full-table">
+            <thead>
+              <tr>
+                <th data-col="id">ID</th>
+                <th data-col="nom">Nom / Email</th>
+                <th data-col="genre">Genre</th>
+                <th data-col="telephone">Téléphone</th>
+                <th data-col="date_naissance">Date naiss.</th>
+                <th data-col="pays">Pays</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cliTbody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cli-modal-overlay" id="cliFormModal">
+        <div class="cli-modal-box">
+          <div class="cli-modal-header">
+            <h3 id="cliFormTitle">Nouveau client</h3>
+            <button class="cli-modal-close" id="cliFormClose">&times;</button>
+          </div>
+          <input type="hidden" id="cliFormId">
+          <div class="cli-form-grid">
+            <div class="cli-form-section">Identité</div>
+            <div class="cli-form-field">
+              <label>Nom <span class="req">*</span></label>
+              <input class="cli-form-input" type="text" id="cliFormNom" placeholder="Dupont">
+            </div>
+            <div class="cli-form-field">
+              <label>Prénom <span class="req">*</span></label>
+              <input class="cli-form-input" type="text" id="cliFormPrenom" placeholder="Jean">
+            </div>
+            <div class="cli-form-field">
+              <label>Genre</label>
+              <select class="cli-form-select" id="cliFormGenre">
+                <option value="Homme">♂ Homme</option>
+                <option value="Femme">♀ Femme</option>
+              </select>
+            </div>
+            <div class="cli-form-field">
+              <label>Date de naissance</label>
+              <input class="cli-form-input" type="date" id="cliFormDateNaissance">
+            </div>
+            <div class="cli-form-section">Contact</div>
+            <div class="cli-form-field f-full">
+              <label>Email <span class="req">*</span></label>
+              <input class="cli-form-input" type="email" id="cliFormEmail" placeholder="jean.dupont@exemple.com">
+            </div>
+            <div class="cli-form-field">
+              <label>Téléphone</label>
+              <input class="cli-form-input" type="text" id="cliFormTelephone" placeholder="+216 XX XXX XXX">
+            </div>
+            <div class="cli-form-field">
+              <label>Pays</label>
+              <input class="cli-form-input" type="text" id="cliFormPays" placeholder="Tunisie" list="cliPaysDatalist">
+              <datalist id="cliPaysDatalist"></datalist>
+            </div>
+          </div>
+          <div class="cli-modal-actions">
+            <button class="cli-btn-cancel" id="cliFormCancel">Annuler</button>
+            <button class="cli-btn-submit" id="cliFormBtn">Créer</button>
+          </div>
+        </div>
+      </div>
+      <div class="cli-confirm-overlay" id="cliConfirmModal">
+        <div class="cli-confirm-box">
+          <div class="ci">🗑️</div>
+          <h4>Confirmer la suppression</h4>
+          <p id="cliConfirmText">Cette action est irréversible.</p>
+          <div class="cli-confirm-actions">
+            <button class="cli-btn-cancel" id="cliConfirmCancel">Annuler</button>
+            <button class="cli-btn-del-confirm" id="cliConfirmBtn">Supprimer</button>
+          </div>
+          <button class="cli-modal-close" id="cliConfirmClose" style="position:absolute;top:14px;right:16px">&times;</button>
+        </div>
+      </div>
+      <div class="cli-toast" id="cliGlobalToast"></div>
+    </div>
+
+    <!-- ══════ VIEW: CHAMBRES ══════ -->
+    <div class="view-section" id="view-chambres">
+      <div class="chb-view-header">
+        <div class="chb-view-header-left">
+          <h2>Chambres</h2>
+          <span class="chb-count-badge" id="chambreCount">—</span>
+        </div>
+        <button class="btn-add-chb" id="btnAddChambre">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nouvelle chambre
+        </button>
+      </div>
+      <div class="chb-filters-card">
+        <div class="chb-filters-title">Filtres</div>
+        <div class="chb-filters-row">
+          <div class="chb-filter-group">
+            <label>Numéro ou type</label>
+            <input class="chb-filter-input" id="chbFilterSearch" type="text" placeholder="Rechercher…">
+          </div>
+          <div class="chb-filter-group">
+            <label>Type de chambre</label>
+            <select class="chb-filter-select" id="chbFilterType">
+              <option value="">Tous les types</option>
+            </select>
+          </div>
+          <div class="chb-filter-group">
+            <label>Disponibilité</label>
+            <select class="chb-filter-select" id="chbFilterAvail">
+              <option value="">Toutes</option>
+              <option value="Disponible">✅ Disponible</option>
+              <option value="Occupé">🔴 Occupé</option>
+              <option value="Maintenance">🔧 Maintenance</option>
+            </select>
+          </div>
+          <div class="chb-filter-group">
+            <label>Prix (TND)</label>
+            <div class="chb-price-range">
+              <input class="chb-filter-input" id="chbFilterPriceMin" type="number" min="0" placeholder="Min">
+              <span>→</span>
+              <input class="chb-filter-input" id="chbFilterPriceMax" type="number" min="0" placeholder="Max">
+            </div>
+          </div>
+          <div class="chb-filter-group">
+            <button class="btn-chb-reset" id="chbBtnReset">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="chb-table-card">
+        <div class="chb-table-card-header">
+          <span class="chtitle">Liste des chambres</span>
+        </div>
+        <div class="chb-table-scroll">
+          <table class="chb-full-table">
+            <thead>
+              <tr>
+                <th data-col="roomnumber">N° Chambre</th>
+                <th data-col="roomType">Type</th>
+                <th data-col="price">Prix / nuit</th>
+                <th data-col="availability">Disponibilité</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="chbTbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:32px">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chb-modal-overlay" id="chbFormModal">
+        <div class="chb-modal-box">
+          <div class="chb-modal-header">
+            <h3 id="chbFormTitle">Nouvelle chambre</h3>
+            <button class="chb-modal-close" id="chbFormClose">&times;</button>
+          </div>
+          <div class="chb-form-grid">
+            <div class="chb-form-section">Identification</div>
+            <div class="chb-form-field">
+              <label>N° de chambre <span class="req">*</span></label>
+              <input class="chb-form-input" type="text" id="chbFormRoomNumber" placeholder="Ex: 101">
+            </div>
+            <div class="chb-form-field">
+              <label>Type <span class="req">*</span></label>
+              <input class="chb-form-input" type="text" id="chbFormRoomType" placeholder="Ex: Suite, Double…">
+            </div>
+            <div class="chb-form-section">Tarif & Statut</div>
+            <div class="chb-form-field">
+              <label>Prix / nuit (TND)</label>
+              <input class="chb-form-input" type="number" id="chbFormPrice" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="chb-form-field">
+              <label>Disponibilité</label>
+              <select class="chb-form-select" id="chbFormAvail">
+                <option value="Disponible">✅ Disponible</option>
+                <option value="Occupé">🔴 Occupé</option>
+                <option value="Maintenance">🔧 Maintenance</option>
+              </select>
+            </div>
+          </div>
+          <div class="chb-modal-actions">
+            <button class="chb-btn-cancel" id="chbFormCancel">Annuler</button>
+            <button class="chb-btn-submit" id="chbFormBtn">Créer</button>
+          </div>
+        </div>
+      </div>
+      <div class="chb-confirm-overlay" id="chbConfirmModal">
+        <div class="chb-confirm-box">
+          <div class="ci">🗑️</div>
+          <h4>Confirmer la suppression</h4>
+          <p id="chbConfirmText">Cette action est irréversible.</p>
+          <div class="chb-confirm-actions">
+            <button class="chb-btn-cancel" id="chbConfirmCancel">Annuler</button>
+            <button class="chb-btn-del-confirm" id="chbConfirmBtn">Supprimer</button>
+          </div>
+          <button class="chb-modal-close" id="chbConfirmClose" style="position:absolute;top:14px;right:16px">&times;</button>
+        </div>
+      </div>
+      <div class="chb-toast" id="chbGlobalToast"></div>
+    </div>
+
+    <!-- ══════ VIEW: STATISTIQUES ══════ -->
+    <div class="view-section" id="view-stats">
+      <div class="placeholder-view">
+        <div class="placeholder-icon">📊</div>
+        <h3>Statistiques avancées</h3>
+        <p>Analyses détaillées, rapports de performance et tableaux de bord approfondis seront disponibles ici.</p>
+        <span class="placeholder-tag">Bientôt disponible</span>
+      </div>
+    </div>
+
+    <!-- ══════ VIEW: HISTORIQUE ══════ -->
+    <div class="view-section" id="view-historique">
+      <div class="res-view-header">
+        <div class="res-view-header-left">
+          <h2>Historique</h2>
+          <span class="res-count-badge" id="histBadgeCount">—</span>
+        </div>
+        <button class="btn-hist-export" id="btnHistExport">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exporter CSV
+        </button>
+      </div>
+      <div class="res-filters-card">
+        <div class="res-filters-title">Filtres</div>
+        <div class="res-filters-row" style="grid-template-columns: 2fr 1fr 1fr 1fr auto;">
+          <div class="res-filter-group">
+            <label>Recherche</label>
+            <input class="res-filter-input" id="histFilterSearch" type="text" placeholder="Nom, email…">
+          </div>
+          <div class="res-filter-group">
+            <label>Statut final</label>
+            <select class="res-filter-select" id="histFilterStatus">
+              <option value="">Tous</option>
+              <option value="Annulé">❌ Annulé</option>
+              <option value="Refusé">🚫 Refusé</option>
+              <option value="Completé">🏁 Completé</option>
+            </select>
+          </div>
+          <div class="res-filter-group">
+            <label>Type de chambre</label>
+            <select class="res-filter-select" id="histFilterRoomType">
+              <option value="">Tous les types</option>
+            </select>
+          </div>
+          <div class="res-filter-group">
+            <label>Période (arrivée)</label>
+            <div class="res-date-range">
+              <input class="res-filter-input" id="histFilterDateFrom" type="date">
+              <span>→</span>
+              <input class="res-filter-input" id="histFilterDateTo" type="date">
+            </div>
+          </div>
+          <div class="res-filter-group" style="justify-content:flex-end;align-self:flex-end;">
+            <button class="btn-res-reset" id="histBtnResetFilters">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="hist-stats-row" id="histStatsRow">
+        <div class="hist-stat-card"><div class="hsc-icon">🏁</div><div class="hsc-info"><span class="hsc-val" id="histStatCompleted">0</span><span class="hsc-lbl">Completées</span></div></div>
+        <div class="hist-stat-card"><div class="hsc-icon">❌</div><div class="hsc-info"><span class="hsc-val" id="histStatCancelled">0</span><span class="hsc-lbl">Annulées</span></div></div>
+        <div class="hist-stat-card"><div class="hsc-icon">🚫</div><div class="hsc-info"><span class="hsc-val" id="histStatRefused">0</span><span class="hsc-lbl">Refusées</span></div></div>
+        <div class="hist-stat-card"><div class="hsc-icon">💰</div><div class="hsc-info"><span class="hsc-val" id="histStatRevenue">0 TND</span><span class="hsc-lbl">Revenu total</span></div></div>
+      </div>
+      <div class="res-table-card" id="histTableContainer">
+        <div class="res-table-card-header">
+          <span class="rtitle">Historique des réservations</span>
+          <span style="font-size:.7rem;color:var(--text-muted);">Lecture seule — statuts terminaux</span>
+        </div>
+        <div class="res-table-scroll">
+          <table class="res-full-table">
+            <thead>
+              <tr>
+                <th data-col="id">ID</th>
+                <th data-col="clientName">Client</th>
+                <th data-col="checkInDate">Dates</th>
+                <th data-col="roomType">Chambre</th>
+                <th data-col="numberOfAdults">Pers.</th>
+                <th data-col="totalPrice">Montant</th>
+                <th data-col="Status">Statut final</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody id="histTbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="res-modal-overlay" id="histDetailModal">
+        <div class="res-modal-box" style="width:520px;">
+          <div class="res-modal-header">
+            <h3>📋 Détail réservation</h3>
+            <button class="res-modal-close" id="histDetailClose">&times;</button>
+          </div>
+          <div id="histDetailContent" class="hist-detail-content"></div>
+        </div>
+      </div>
+      <div class="res-toast" id="histGlobalToast"></div>
+    </div>
+
+    <!-- ══════ VIEW: RÉCLAMATIONS (ADMIN) ══════ -->
+    <div class="view-section" id="view-reclamations">
+
+      <!-- En-tête -->
+      <div class="rec-view-header">
+        <div class="rec-view-header-left">
+          <h2>Réclamations</h2>
+          <span class="rec-count-badge" id="recAdmBadgeCount">—</span>
+        </div>
+      </div>
+
+      <!-- KPI row -->
+      <div class="rec-kpi-row">
+        <div class="rec-kpi-mini total">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">Total</div>
+          <div class="rkm-val" id="recKpiTotal">—</div>
+        </div>
+        <div class="rec-kpi-mini elevee">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">🔴 Urgence élevée</div>
+          <div class="rkm-val" id="recKpiElevee">—</div>
+        </div>
+        <div class="rec-kpi-mini moyenne">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">🟠 Urgence moyenne</div>
+          <div class="rkm-val" id="recKpiMoyenne">—</div>
+        </div>
+        <div class="rec-kpi-mini faible">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">🟢 Urgence faible</div>
+          <div class="rkm-val" id="recKpiFaible">—</div>
+        </div>
+        <div class="rec-kpi-mini ouverte">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">📬 Ouvertes</div>
+          <div class="rkm-val" id="recKpiOuverte">—</div>
+        </div>
+        <div class="rec-kpi-mini encours">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">⚙️ En cours</div>
+          <div class="rkm-val" id="recKpiEncours">—</div>
+        </div>
+        <div class="rec-kpi-mini resolue">
+          <div class="rkm-glow"></div>
+          <div class="rkm-label">✅ Résolues</div>
+          <div class="rkm-val" id="recKpiResolue">—</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="rec-charts-grid">
+        <!-- Évolution mensuelle par urgence (stacked) -->
+        <div class="rec-chart-card wide">
+          <div class="rec-chart-header">
+            <span class="rec-chart-title">Évolution mensuelle par urgence</span>
+            <span class="chart-badge gold">12 mois</span>
+          </div>
+          <div class="rec-chart-area" style="height:220px">
+            <canvas id="recChartMonth"></canvas>
+          </div>
+        </div>
+        <!-- Répartition urgence -->
+        <div class="rec-chart-card">
+          <div class="rec-chart-header">
+            <span class="rec-chart-title">Répartition urgence</span>
+            <span class="chart-badge violet">Distribution</span>
+          </div>
+          <div class="rec-chart-area">
+            <canvas id="recChartUrgence"></canvas>
+          </div>
+        </div>
+        <!-- Répartition statut -->
+        <div class="rec-chart-card">
+          <div class="rec-chart-header">
+            <span class="rec-chart-title">Répartition statut</span>
+            <span class="chart-badge teal">Live</span>
+          </div>
+          <div class="rec-chart-area">
+            <canvas id="recChartStatut"></canvas>
+          </div>
+        </div>
+        <!-- Top types (barre horizontale) -->
+        <div class="rec-chart-card wide">
+          <div class="rec-chart-header">
+            <span class="rec-chart-title">Top types de réclamations</span>
+            <span class="chart-badge gold">Classement</span>
+          </div>
+          <div class="rec-chart-area" style="height:420px">
+            <canvas id="recChartType"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pills filtres rapides -->
+      <div class="rec-quick-filters">
+        <span style="font-size:.7rem;color:var(--text-muted);align-self:center;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Urgence :</span>
+        <button class="rec-qf-pill pill-elevee"  data-filter-type="urgence" data-value="Élevée">🔴 Élevée</button>
+        <button class="rec-qf-pill pill-moyenne" data-filter-type="urgence" data-value="Moyenne">🟠 Moyenne</button>
+        <button class="rec-qf-pill pill-faible"  data-filter-type="urgence" data-value="Faible">🟢 Faible</button>
+        <span style="width:1px;height:22px;background:var(--border);display:inline-block;align-self:center;margin:0 4px"></span>
+        <span style="font-size:.7rem;color:var(--text-muted);align-self:center;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Statut :</span>
+        <button class="rec-qf-pill pill-ouverte" data-filter-type="statut" data-value="ouverte">📬 Ouvertes</button>
+        <button class="rec-qf-pill pill-encours" data-filter-type="statut" data-value="en_cours">⚙️ En cours</button>
+        <button class="rec-qf-pill pill-resolue" data-filter-type="statut" data-value="resolue">✅ Résolues</button>
+      </div>
+
+      <!-- Filtres avancés -->
+      <div class="rec-filters-card">
+        <div class="rec-filters-title">Filtres avancés</div>
+        <div class="rec-filters-row">
+          <div class="rec-filter-group">
+            <label>Recherche</label>
+            <input class="rec-filter-input" id="recAdmFilterSearch" type="text" placeholder="Nom, email, description…">
+          </div>
+          <div class="rec-filter-group">
+            <label>Type</label>
+            <select class="rec-filter-select" id="recAdmFilterType">
+              <option value="">Tous les types</option>
+              <option value="chambre">Chambre</option>
+              <option value="salle_de_bain">Salle de bain</option>
+              <option value="climatisation">Climatisation</option>
+              <option value="chauffage">Chauffage</option>
+              <option value="electricite">Électricité</option>
+              <option value="wifi">WiFi</option>
+              <option value="television">Télévision</option>
+              <option value="bruit">Bruit</option>
+              <option value="proprete">Propreté</option>
+              <option value="literie">Literie</option>
+              <option value="restauration">Restauration</option>
+              <option value="petit_dejeuner">Petit-déjeuner</option>
+              <option value="room_service">Room Service</option>
+              <option value="piscine">Piscine</option>
+              <option value="spa">Spa</option>
+              <option value="parking">Parking</option>
+              <option value="service_reception">Réception</option>
+              <option value="service_menage">Ménage</option>
+              <option value="service_securite">Sécurité</option>
+              <option value="facturation">Facturation</option>
+              <option value="remboursement">Remboursement</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="rec-filter-group">
+            <label>Date de</label>
+            <input class="rec-filter-input" id="recAdmFilterDateFrom" type="date">
+          </div>
+          <div class="rec-filter-group">
+            <label>Date à</label>
+            <input class="rec-filter-input" id="recAdmFilterDateTo" type="date">
+          </div>
+          <div class="rec-filter-group" style="justify-content:flex-end;align-self:flex-end">
+            <button class="btn-rec-reset" id="recAdmBtnReset">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau -->
+      <div class="rec-adm-table-card">
+        <div class="rec-adm-table-header">
+          <span class="rtitle">Liste des réclamations</span>
+          <span style="font-size:.7rem;color:var(--text-muted)">Urgences élevées en tête · cliquer sur la description pour voir le détail</span>
+        </div>
+        <div id="recAdmLoadingMsg" style="display:none;padding:20px;color:var(--text-muted);font-size:.82rem">⏳ Chargement…</div>
+        <div class="rec-adm-table-scroll">
+          <table class="rec-adm-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Urgence</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Chambre · Date</th>
+                <th>Statut</th>
+                <th>Détail</th>
+              </tr>
+            </thead>
+            <tbody id="recAdmTbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Détail -->
+      <div class="rec-detail-overlay" id="recDetailModal">
+        <div class="rec-detail-box">
+          <div class="rec-detail-header">
+            <h3>📋 Réclamation <span id="recDetailId"></span></h3>
+            <button class="rec-detail-close" id="recDetailClose">&times;</button>
+          </div>
+          <div class="rec-detail-body">
+
+            <div class="rec-detail-section">Urgence &amp; Type</div>
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+              <span id="recDetailUrgence"></span>
+              <span id="recDetailType" class="badge-type"></span>
+            </div>
+
+            <div class="rec-detail-section">Description</div>
+            <div class="rec-detail-desc" id="recDetailDesc"></div>
+
+            <div class="rec-detail-section">Client</div>
+            <div class="rec-detail-grid">
+              <div class="rec-detail-item"><label>Nom</label><span id="recDetailClient"></span></div>
+              <div class="rec-detail-item"><label>Email</label><span id="recDetailEmail"></span></div>
+              <div class="rec-detail-item"><label>Téléphone</label><span id="recDetailPhone"></span></div>
+              <div class="rec-detail-item"><label>Date réclamation</label><span id="recDetailDate"></span></div>
+            </div>
+
+            <div class="rec-detail-section">Réservation liée</div>
+            <div class="rec-detail-grid">
+              <div class="rec-detail-item"><label>Type chambre</label><span id="recDetailRoomType"></span></div>
+              <div class="rec-detail-item"><label>N° chambre</label><span id="recDetailRoom"></span></div>
+              <div class="rec-detail-item"><label>Check-in</label><span id="recDetailCheckin"></span></div>
+              <div class="rec-detail-item"><label>Check-out</label><span id="recDetailCheckout"></span></div>
+            </div>
+
+            <div class="rec-detail-section">Changer le statut</div>
+            <div class="rec-detail-statut-actions">
+              <button class="rec-detail-statut-btn" data-statut="ouverte">📬 Ouvert</button>
+              <button class="rec-detail-statut-btn" data-statut="en_cours">⚙️ En cours</button>
+              <button class="rec-detail-statut-btn" data-statut="resolue">✅ Résolu</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm delete -->
+      <div class="rec-confirm-overlay-adm" id="recConfirmModalAdm">
+        <div class="rec-confirm-box-adm">
+          <div class="ci">🗑️</div>
+          <h4>Confirmer la suppression</h4>
+          <p>Cette action est irréversible.</p>
+          <div class="rec-confirm-actions-adm">
+            <button class="rec-btn-cancel-adm" id="recConfirmCancelAdm">Annuler</button>
+            <button class="rec-btn-del-confirm-adm" id="recConfirmBtnAdm">Supprimer</button>
+          </div>
+          <button class="rec-detail-close" id="recConfirmCloseAdm" style="position:absolute;top:14px;right:16px">&times;</button>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="rec-adm-toast" id="recAdmToast"></div>
+
+    </div><!-- /view-reclamations -->
+
+    <!-- ══════ VIEW: PRÉDICTIONS ══════ -->
+    <div class="view-section" id="view-predictions">
+      <div class="pred-toolbar">
+        <span class="pred-toolbar-title">📊 Prédiction Réservations</span>
+        <select id="predPeriod" class="pred-horizon-select" onchange="">
+          <option value="daily">Journalier</option>
+          <option value="weekly">Hebdomadaire</option>
+          <option value="monthly" selected>Mensuel</option>
+        </select>
+        <select id="predHorizon" class="pred-horizon-select">
+          <option value="3">3 périodes</option>
+          <option value="6" selected>6 périodes</option>
+          <option value="12">12 périodes</option>
+          <option value="24">24 périodes</option>
+        </select>
+        <div class="pred-horizon-wrap" style="margin-left:auto;">
+          <button class="pred-btn-refresh" onclick="loadPrediction()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 11-6.219-8.56"/>
+            </svg>
+            Lancer prédiction
+          </button>
+        </div>
+      </div>
+      <div id="predDataQualityBanner" style="display:none;"></div>
+      <div class="pred-kpi-row">
+        <div class="pred-kpi-card accent-purple">
+          <div class="pred-kpi-badge">📦</div>
+          <div class="pred-kpi-label">Total prévu</div>
+          <div class="pred-kpi-value" id="kpiTotal">—</div>
+          <div class="pred-kpi-sub">réservations sur la période</div>
+        </div>
+        <div class="pred-kpi-card">
+          <div class="pred-kpi-badge">📊</div>
+          <div class="pred-kpi-label">Moyenne</div>
+          <div class="pred-kpi-value" id="kpiAvg">—</div>
+          <div class="pred-kpi-sub">rés. / période</div>
+        </div>
+        <div class="pred-kpi-card accent-gold">
+          <div class="pred-kpi-badge">🔥</div>
+          <div class="pred-kpi-label">Pic max</div>
+          <div class="pred-kpi-value" id="kpiMax">—</div>
+          <div class="pred-kpi-sub">pic prévu sur la période</div>
+        </div>
+      </div>
+      <div class="pred-chart-card">
+        <div class="pred-chart-header">
+          <span class="pred-chart-title">Évolution des réservations</span>
+          <div class="pred-chart-meta">
+            <span id="modelBadge" class="pred-model-badge prophet">Prophet</span>
+            <div class="pred-legend-item"><span class="pred-legend-dot" style="background:#6c63ff;"></span>Prédiction</div>
+            <div class="pred-legend-item"><span class="pred-legend-dot" style="background:#34d399;"></span>Historique</div>
+            <div class="pred-legend-item"><span class="pred-legend-dot" style="background:rgba(108,99,255,.3);border-radius:2px;width:14px;height:8px;"></span>Intervalle confiance</div>
+          </div>
+        </div>
+        <div class="pred-chart-area"><canvas id="predChart"></canvas></div>
+      </div>
+      <div class="pred-bottom-grid">
+        <div class="pred-insight-card">
+          <div class="pred-insight-header">
+            <div class="pred-insight-icon">🧠</div>
+            <div>
+              <div class="pred-insight-title">Analyse IA</div>
+              <div class="pred-insight-sub">Interprétation automatique</div>
+            </div>
+          </div>
+          <div class="pred-insight-body" id="predInsight">Cliquez sur « Lancer prédiction » pour générer une analyse.</div>
+        </div>
+        <div class="pred-side-panel">
+          <div class="pred-peaks-card">
+            <div class="pred-section-label">🔥 Pics détectés</div>
+            <div id="predPeaks"><p class="pred-peak-empty">Lancez une prédiction pour voir les pics.</p></div>
+          </div>
+          <div class="pred-metrics-card">
+            <div class="pred-section-label">📐 Métriques du modèle</div>
+            <div class="pred-metrics-grid">
+              <div class="pred-metric-item"><div class="pred-metric-name">MAE</div><div class="pred-metric-val na" id="metricMAE">—</div></div>
+              <div class="pred-metric-item"><div class="pred-metric-name">RMSE</div><div class="pred-metric-val na" id="metricRMSE">—</div></div>
+              <div class="pred-metric-item"><div class="pred-metric-name">MAPE</div><div class="pred-metric-val na" id="metricMAPE">—</div></div>
+              <div class="pred-metric-item"><div class="pred-metric-name">Points</div><div class="pred-metric-val na" id="metricPoints">—</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="dashboard_admin.js"></script>
+<script src="gestion_clients.js"></script>
+<script src="gestion_reservation.js"></script>
+<script src="gestion_chambres.js"></script>
+<script src="gestion_historique.js"></script>
+<script src="gestion_transitions.js"></script>
+<script src="bi_widget.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="prediction.js"></script>
+<script src="gestion_reclamation.js"></script>
+
+<!-- Patch showView pour déclencher initRecView -->
+<script>
+(function() {
+  const _orig = window.showView;
+  window.showView = function(view) {
+    if (typeof _orig === 'function') _orig(view);
+    if (view === 'reclamations') {
+      setTimeout(() => {
+        if (typeof window.initRecView === 'function') window.initRecView();
+      }, 50);
+    }
+  };
+})();
+</script>
+</body>
+</html>

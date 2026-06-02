@@ -1241,7 +1241,57 @@
   border-left: 2px solid var(--gold);
   padding: 8px 12px;
   margin-bottom: 16px;
-}\n\n.edit-modal-ref {\n  font-size: 10px;\n  color: var(--muted);\n  margin-top: 4px;\n  letter-spacing: 0.5px;\n}\n\n/* Button styles shared across modals */\n.btn-outline-sm {\n  padding: 9px 18px;\n  border: 1px solid var(--border);\n  background: transparent;\n  color: var(--text-light);\n  font-family: var(--sans);\n  font-size: 10px;\n  font-weight: 600;\n  letter-spacing: 1.5px;\n  text-transform: uppercase;\n  cursor: pointer;\n  transition: all .2s;\n  border-radius: 0;\n}\n\n.btn-outline-sm:hover {\n  border-color: var(--border-hover);\n  color: var(--white);\n}\n\n.btn-gold-sm {\n  padding: 9px 20px;\n  border: 1px solid rgba(201,168,76,.45);\n  background: rgba(201,168,76,.12);\n  color: var(--gold);\n  font-family: var(--sans);\n  font-size: 10px;\n  font-weight: 600;\n  letter-spacing: 1.5px;\n  text-transform: uppercase;\n  cursor: pointer;\n  transition: all .2s;\n  border-radius: 0;\n}\n\n.btn-gold-sm:hover {\n  background: var(--gold-dim);\n  border-color: var(--gold);\n}\n\n/* ============================================\n   RESPONSIVE\n   ============================================ */\n@media (max-width: 1100px) {
+}
+.edit-modal-ref {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    }/* Button styles shared across modals */
+    .btn-outline-sm {
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-light);
+    font-family: var(--sans);
+font-size: 10px;
+font-weight: 600;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+cursor: pointer;
+transition: all .2s;
+border-radius: 0;
+}
+
+.btn-outline-sm:hover {
+  border-color: var(--border-hover);
+  color: var(--white);
+}
+
+.btn-gold-sm {
+  padding: 9px 20px;
+  border: 1px solid rgba(201,168,76,.45);
+  background: rgba(201,168,76,.12);
+  color: var(--gold);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+  border-radius: 0;
+}
+
+.btn-gold-sm:hover {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1100px) {
   .reservations-summary { grid-template-columns: repeat(2, 1fr); }
 }
 

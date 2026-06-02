@@ -740,3 +740,86 @@
 @media (max-width: 860px) {
   .recl-modal-footer { flex-wrap: wrap; }
 }
+/* ============================================================
+   URGENCE BADGES — Royal Mansour Réclamations
+   ============================================================ */
+
+/* Panel de détection urgence (sous le panel type) */
+#reclUrgencePanel { margin-top: 8px; }
+
+.recl-urgence {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 0.5px solid;
+}
+
+/* Variantes de couleur */
+.recl-urgence--low {
+  background: var(--color-background-success);
+  border-color: var(--color-border-success);
+}
+.recl-urgence--medium {
+  background: var(--color-background-warning);
+  border-color: var(--color-border-warning);
+}
+.recl-urgence--high {
+  background: var(--color-background-danger);
+  border-color: var(--color-border-danger);
+  animation: recl-pulse 2s ease-in-out infinite;
+}
+
+@keyframes recl-pulse {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 0 3px var(--color-border-danger); }
+}
+
+.recl-urgence-left  { display: flex; align-items: center; gap: 10px; }
+.recl-urgence-icon  { font-size: 18px; }
+.recl-urgence-info  { display: flex; flex-direction: column; gap: 2px; }
+.recl-urgence-label { font-size: 11px; color: var(--color-text-secondary); }
+.recl-urgence-value { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+
+.recl-urgence-boost {
+  font-size: 10px;
+  color: var(--color-text-warning);
+  margin-top: 2px;
+}
+
+.recl-urgence-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.recl-urgence-axes {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.recl-urgence-meta {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+/* Badge compact dans les cartes de liste */
+.recl-urgence-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+.recl-urgence-badge.recl-urgence--low    { background: var(--color-background-success); color: var(--color-text-success); }
+.recl-urgence-badge.recl-urgence--medium { background: var(--color-background-warning); color: var(--color-text-warning); }
+.recl-urgence-badge.recl-urgence--high   { background: var(--color-background-danger);  color: var(--color-text-danger);  }
+
+/* Carte urgente — bordure gauche accentuée */
+.recl-card--urgent {
+  border-left: 3px solid var(--color-border-danger);
+}

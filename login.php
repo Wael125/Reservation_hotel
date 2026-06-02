@@ -45,7 +45,7 @@ if(isset($_POST['login'])){
     $_SESSION['role'] = $role;
 
     // 🔥 REDIRECTION SELON LE RÔLE
-    $redirect = ($role === 'admin') ? "kpi.php" : "dashboard.php";
+    $redirect = ($role === 'admin') ? "dashboard_admin.php" : "dashboard.php";
 
     echo json_encode([
         "status" => "success",

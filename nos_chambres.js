@@ -119,34 +119,40 @@
     window.location.href = `reserver.html?room=${encodeURIComponent(roomType)}`;
   }
 
-  function show() {
-    window.MesReservations?.hide();
-    document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
-      el._prev = el.style.display;
-      el.style.display = 'none';
-    });
+function show() {
+  window.MesReservations?.hide();
 
-    const roomsSection = document.getElementById('roomsSection');
-    if (roomsSection) {
-      roomsSection.style.display = 'block';
-      roomsSection.classList.add('active');
-    }
+  // Cacher dashboard sans toucher à _prev (MesReservations s'en charge)
+  document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
+    el._nosChambresHidden = true;
+    el.style.display = 'none';
+  });
 
-    const greeting = document.querySelector('.topbar-greeting');
-    if (greeting) greeting.textContent = 'Nos chambres,';
+  const roomsSection = document.getElementById('roomsSection');
+  if (roomsSection) {
+    roomsSection.style.display = 'block';
+    roomsSection.classList.add('active');
   }
 
-  function hide() {
-    document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
-      el.style.display = el._prev !== undefined ? el._prev : '';
-    });
+  const greeting = document.querySelector('.topbar-greeting');
+  if (greeting) greeting.textContent = 'Nos chambres,';
+}
 
-    const roomsSection = document.getElementById('roomsSection');
-    if (roomsSection) {
-      roomsSection.style.display = 'none';
-      roomsSection.classList.remove('active');
+function hide() {
+  // Restaurer seulement ce que NosChambres a caché
+  document.querySelectorAll('.stats-row, .dashboard-grid, .checkin-banner').forEach(el => {
+    if (el._nosChambresHidden) {
+      el.style.display = '';
+      el._nosChambresHidden = false;
     }
+  });
+
+  const roomsSection = document.getElementById('roomsSection');
+  if (roomsSection) {
+    roomsSection.style.display = 'none';
+    roomsSection.classList.remove('active');
   }
+}
 
   window.NosChambres = {
     init: initRoomsSection,

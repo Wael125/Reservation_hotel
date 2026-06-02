@@ -1,9 +1,9 @@
 <?php
 /**
- * kpi.php — Point d'entrée principal du dashboard
+ * dashboard_admin.php — Point d'entrée principal du dashboard admin
  *
  * GET ?action=all  → retourne les données JSON pour le dashboard
- * Sinon            → sert kpi.html (avec vérification de session admin)
+ * Sinon            → sert dashboard_admin.html (avec vérification de session admin)
  */
 
 session_start();
@@ -63,12 +63,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $action = $_GET['action'] ?? null;
 
+if ($action === 'notifications') {
+    if (!isset($_SESSION['login_id']) || (($_SESSION['role'] ?? 'client') !== 'admin')) {
+        denyApiAccess();
+    }
+    header('Content-Type: application/json; charset=UTF-8');
+    require 'db.php';
+    
+    // Dernières réclamations (dernières 5)
+    $reclamations = query($pdo,
+        'SELECT id, clientName, priorite, created_at FROM reclamation ORDER BY created_at DESC LIMIT 5'
+    )->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Derniers clients (derniers 5)
+    $clients = query($pdo,
+        'SELECT id, firstName, lastName, created_at FROM customer ORDER BY created_at DESC LIMIT 5'
+    )->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Dernières réservations (dernières 5)
+    $reservations = query($pdo,
+        'SELECT id, clientName, roomType, createdAt FROM reservation ORDER BY id DESC LIMIT 5'
+    )->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode([
+        'reclamations' => $reclamations,
+        'clients' => $clients,
+        'reservations' => $reservations,
+    ], JSON_THROW_ON_ERROR);
+    exit;
+}
+
 if ($action !== 'all') {
     redirectForDashboard();
     header('Content-Type: text/html; charset=UTF-8');
     echo '<script>window.LOGIN_ID = '   . json_encode($_SESSION['login_id'])          . ';';
     echo 'window.ADMIN_NAME = '         . json_encode($_SESSION['username'] ?? 'Admin') . ';</script>';
-    include 'kpi.html';
+    include 'dashboard_admin.html';
     exit;
 }
 
@@ -227,7 +257,7 @@ function getRecentReservations(PDO $pdo): array
 }
 
 /**
- * getRoomStatus — aliases alignés avec renderRoomStatus() dans kpi.js.
+ * getRoomStatus — aliases alignés avec renderRoomStatus() dans dashboard_admin.js.
  * La colonne availability contient exactement 3 valeurs :
  *   'Disponible' | 'Occupé' | 'Maintenance'
  */

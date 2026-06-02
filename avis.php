@@ -1,6 +1,8 @@
 <?php
 /**
  * avis.php — API avis Royal Mansour
+ * 1 client = 1 seul avis modifiable (UPDATE si existe, INSERT sinon)
+ * Lié automatiquement à la dernière réservation valide
  */
 session_start();
 require "db.php";
@@ -85,55 +87,74 @@ if (!$user) {
 $customer_id = $user['id'];
 
 /* ================================================================
-   GET — Réservation cible pour l'avis (auto-sélection)
+   HELPER — Dernière réservation valide du client
+   Priorité : Checked_in > Checked_out/Completed (par date DESC)
+   ================================================================ */
+function getLastValidReservation($pdo, $customer_id) {
+
+    // 1. Séjour en cours (Checked_in)
+    $stmt = $pdo->prepare("
+        SELECT id, roomType, roomNumber, checkInDate, checkOutDate, status
+        FROM reservation
+        WHERE customer_id = ?
+          AND LOWER(status) = 'checked_in'
+        ORDER BY checkInDate DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$customer_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) return ['reservation' => $row, 'source' => 'checked_in'];
+
+    // 2. Dernière réservation terminée
+    $stmt = $pdo->prepare("
+        SELECT id, roomType, roomNumber, checkInDate, checkOutDate, status
+        FROM reservation
+        WHERE customer_id = ?
+          AND LOWER(status) IN ('checked_out', 'completé', 'complete', 'completed')
+        ORDER BY checkOutDate DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$customer_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) return ['reservation' => $row, 'source' => 'completed'];
+
+    return ['reservation' => null, 'source' => 'none'];
+}
+
+/* ================================================================
+   HELPER — Avis existant du client
+   ================================================================ */
+function getExistingAvis($pdo, $customer_id) {
+    $stmt = $pdo->prepare("
+        SELECT a.id, a.note, a.commentaire, a.reservation_id, a.created_at
+        FROM avis a
+        WHERE a.customer_id = ?
+        ORDER BY a.created_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$customer_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+/* ================================================================
+   GET — Réservation cible + avis existant pour la modal
    ================================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'reservations') {
 
-    /* 1. Priorité : séjour en cours (checked_in) sans avis */
-    $stmt = $pdo->prepare("
-        SELECT r.id, r.roomType, r.roomNumber, r.checkInDate, r.checkOutDate, r.status
-        FROM reservation r
-        LEFT JOIN avis a ON a.reservation_id = r.id
-        WHERE r.customer_id = ?
-          AND LOWER(r.status) = 'checked_in'
-          AND a.id IS NULL
-        ORDER BY r.checkInDate DESC
-        LIMIT 1
-    ");
-    $stmt->execute([$customer_id]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $result      = getLastValidReservation($pdo, $customer_id);
+    $existingAvis = getExistingAvis($pdo, $customer_id);
 
-    if ($row) {
-        echo json_encode(['reservation' => $row, 'source' => 'checked_in']);
-        exit;
-    }
-
-    /* 2. Fallback : dernière réservation terminée sans avis */
-    $stmt = $pdo->prepare("
-        SELECT r.id, r.roomType, r.roomNumber, r.checkInDate, r.checkOutDate, r.status
-        FROM reservation r
-        LEFT JOIN avis a ON a.reservation_id = r.id
-        WHERE r.customer_id = ?
-          AND LOWER(r.status) IN ('checked_out', 'completé', 'complete', 'completed')
-          AND a.id IS NULL
-        ORDER BY r.checkOutDate DESC
-        LIMIT 1
-    ");
-    $stmt->execute([$customer_id]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($row) {
-        echo json_encode(['reservation' => $row, 'source' => 'completed']);
-        exit;
-    }
-
-    /* 3. Aucune réservation éligible */
-    echo json_encode(['reservation' => null, 'source' => 'none']);
+    echo json_encode([
+        'reservation'   => $result['reservation'],
+        'source'        => $result['source'],
+        'existing_avis' => $existingAvis,   // null si aucun avis
+        'is_edit'       => $existingAvis !== null,
+    ]);
     exit;
 }
 
 /* ================================================================
-   POST — Soumettre un avis
+   POST — Soumettre ou modifier un avis (UPSERT)
    ================================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -143,47 +164,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $reservation_id = intval($body['reservation_id'] ?? 0);
-    $note           = intval($body['note']           ?? 0);
-    $commentaire    = trim($body['commentaire']      ?? '');
+    $note        = intval($body['note']        ?? 0);
+    $commentaire = trim($body['commentaire']   ?? '');
 
-    if ($reservation_id <= 0) {
-        echo json_encode(['error' => 'Réservation introuvable.']);
-        exit;
-    }
     if ($note < 1 || $note > 5) {
         echo json_encode(['error' => 'Veuillez attribuer une note entre 1 et 5.']);
         exit;
     }
 
-    /* Vérifie que la réservation appartient au client et est éligible */
-    $stmt = $pdo->prepare("
-        SELECT id FROM reservation
-        WHERE id = ?
-          AND customer_id = ?
-          AND LOWER(status) IN ('checked_in', 'checked_out', 'completé', 'complete', 'completed')
-    ");
-    $stmt->execute([$reservation_id, $customer_id]);
-    if (!$stmt->fetch()) {
-        echo json_encode(['error' => 'Réservation invalide ou séjour non éligible.']);
+    // Récupérer la dernière réservation valide (toujours lié à celle-ci)
+    $result = getLastValidReservation($pdo, $customer_id);
+    if (!$result['reservation']) {
+        echo json_encode(['error' => 'Aucune réservation éligible pour laisser un avis (Checked_in, Checked_out ou Completed requis).']);
         exit;
     }
+    $reservation_id = $result['reservation']['id'];
 
-    /* Vérifie qu'un avis n'existe pas déjà pour cette réservation */
-    $stmt = $pdo->prepare("SELECT id FROM avis WHERE reservation_id = ?");
-    $stmt->execute([$reservation_id]);
-    if ($stmt->fetch()) {
-        echo json_encode(['error' => 'Vous avez déjà laissé un avis pour ce séjour.']);
-        exit;
+    // Vérifier si un avis existe déjà pour ce client
+    $existingAvis = getExistingAvis($pdo, $customer_id);
+
+    if ($existingAvis) {
+        // UPDATE — modifier l'avis existant + mettre à jour la réservation liée
+        $stmt = $pdo->prepare("
+            UPDATE avis
+            SET note           = ?,
+                commentaire    = ?,
+                reservation_id = ?,
+                created_at     = NOW()
+            WHERE id = ?
+              AND customer_id = ?
+        ");
+        $stmt->execute([
+            $note,
+            $commentaire ?: null,
+            $reservation_id,
+            $existingAvis['id'],
+            $customer_id,
+        ]);
+        echo json_encode(['success' => true, 'action' => 'updated']);
+    } else {
+        // INSERT — premier avis
+        $stmt = $pdo->prepare("
+            INSERT INTO avis (reservation_id, customer_id, note, commentaire)
+            VALUES (?, ?, ?, ?)
+        ");
+        $stmt->execute([$reservation_id, $customer_id, $note, $commentaire ?: null]);
+        echo json_encode(['success' => true, 'action' => 'created']);
     }
-
-    $stmt = $pdo->prepare("
-        INSERT INTO avis (reservation_id, customer_id, note, commentaire)
-        VALUES (?, ?, ?, ?)
-    ");
-    $stmt->execute([$reservation_id, $customer_id, $note, $commentaire ?: null]);
-
-    echo json_encode(['success' => true]);
     exit;
 }
 

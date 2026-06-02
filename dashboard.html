@@ -9,8 +9,13 @@
 <link rel="stylesheet" href="dashboard.css">
 <link rel="stylesheet" href="nos_chambres.css">
 <link rel="stylesheet" href="mes_reservations.css">
+<link rel="stylesheet" href="mon_profil.css">
 <link rel="stylesheet" href="avis.css">
 <link rel="stylesheet" href="reclamation.css">
+<link rel="stylesheet" href="activites.css">
+<link rel="stylesheet" href="facture-paiement.css">
+<link rel="stylesheet" href="restaurant.css">
+<link rel="stylesheet" href="spa.css">
 </head>
 <body>
 
@@ -42,14 +47,22 @@
     </a>
 
     <div class="nav-section-label" style="margin-top:24px;">Services</div>
+
+    <!-- SPA & BIEN-ÊTRE — icône lotus différenciée -->
     <a href="#" class="nav-item" data-section="spa">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>Spa & Bien-être</span>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 22c0-4-4-7-4-11a4 4 0 018 0c0 4-4 7-4 11z"/>
+        <path d="M12 11c-2-2-5-2-7 0 2 2 5 3 7 0z"/>
+        <path d="M12 11c2-2 5-2 7 0-2 2-5 3-7 0z"/>
+      </svg>
+      <span>Spa &amp; Bien-être</span>
     </a>
+
     <a href="#" class="nav-item" data-section="restaurant">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
       <span>Restaurant</span>
     </a>
+
     <a href="#" class="nav-item" data-section="activites">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span>Activités</span>
@@ -62,7 +75,7 @@
     </a>
     <a href="#" class="nav-item" data-section="factures">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      <span>Factures & Paiements</span>
+      <span>Factures &amp; Paiements</span>
     </a>
   </nav>
 
@@ -141,7 +154,6 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         Laisser un avis
       </button>
-      <!-- ✅ BOUTON RÉCLAMATION — dans la bannière checked-in -->
       <button class="recl-trigger-btn" onclick="openReclamation()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Réclamation
@@ -297,6 +309,22 @@
             <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </button>
 
+          <!-- BOUTON RAPIDE SPA -->
+          <button class="quick-btn" onclick="document.querySelector('[data-section=spa]').click()">
+            <div class="quick-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22c0-4-4-7-4-11a4 4 0 018 0c0 4-4 7-4 11z"/>
+                <path d="M12 11c-2-2-5-2-7 0 2 2 5 3 7 0z"/>
+                <path d="M12 11c2-2 5-2 7 0-2 2-5 3-7 0z"/>
+              </svg>
+            </div>
+            <div class="quick-btn-body">
+              <span class="quick-btn-title">Réserver un soin Spa</span>
+              <span class="quick-btn-sub">Rituels · Massages · Hammam</span>
+            </div>
+            <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+
           <button class="quick-btn" onclick="downloadInvoice()">
             <div class="quick-btn-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
@@ -319,7 +347,7 @@
             <svg class="quick-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </button>
 
-          <!-- ✅ BOUTON RÉCLAMATION — Actions rapides -->
+          <!-- BOUTON RÉCLAMATION -->
           <button class="quick-btn quick-btn--recl" onclick="openReclamation()">
             <div class="quick-btn-icon quick-btn-icon--recl">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -441,7 +469,73 @@
       </div>
     </div>
   </section>
+
+  <!-- ========== SECTION ACTIVITÉS ========== -->
+  <section class="activites-section" id="activitesSection" style="display:none;">
+    <div class="activites-hero">
+      <div class="activites-hero-left">
+        <div class="activites-source-note">✦ Royal Mansour — Expériences</div>
+        <h2 class="activites-title">Nos <em>Activités</em><br>&amp; Loisirs</h2>
+      </div>
+      <div class="activites-hero-right">
+        <div class="activites-hero-stat">
+          <span class="activites-hero-stat-val" id="heroActivitesTotal">—</span>
+          <span class="activites-hero-stat-label">Activités disponibles</span>
+        </div>
+      </div>
+    </div>
+    <div class="activites-toolbar" id="activitesToolbar"></div>
+    <div class="activites-grid" id="activitesGrid">
+      <div class="activites-empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <p>Chargement des activités…</p>
+      </div>
+    </div>
+    <div class="activites-info-strip">
+      <div class="activites-info-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+      </div>
+      <div class="activites-info-text">
+        <h4>Réservation via votre Concierge</h4>
+        <p>Toutes les activités sont organisées sur mesure par notre équipe. Contactez votre concierge personnel pour toute demande ou réservation — disponible 24h/24 à l'accueil ou au <a href="tel:+21673681100">+216 73 681 100</a>.</p>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<!-- ========== MODAL DÉTAIL ACTIVITÉ ========== -->
+<div class="activite-overlay" id="activiteOverlay"></div>
+<div class="activite-modal" id="activiteModal" role="dialog" aria-modal="true" aria-labelledby="activiteModalTitle">
+  <div class="activite-modal-hero" id="activiteModalHero"></div>
+  <div class="activite-modal-thumbs" id="activiteModalThumbs"></div>
+  <div class="activite-modal-body">
+    <div class="activite-modal-top">
+      <h3 class="activite-modal-title" id="activiteModalTitle"></h3>
+      <button class="activite-modal-close" onclick="Activites.closeModal()" aria-label="Fermer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="activite-modal-stats"  id="activiteModalStats"></div>
+    <div class="activite-modal-statut" id="activiteModalStatut"></div>
+    <div style="margin-bottom:16px;"><span class="activite-badge-type" id="activiteModalBadgeType"></span></div>
+    <div class="activite-modal-desc-label">Description</div>
+    <p class="activite-modal-desc" id="activiteModalDesc"></p>
+  </div>
+  <div class="activite-modal-footer">
+    <span class="activite-modal-footer-note">Réservation sur demande auprès du concierge</span>
+    <div class="activite-modal-footer-actions">
+      <button class="activite-detail-btn" onclick="Activites.closeModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Fermer
+      </button>
+      <button class="activite-detail-btn" id="activiteModalActionBtn" style="display:none; border-color:var(--gold); color:var(--gold);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+        Contacter le concierge
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ========== REVIEW MODAL ========== -->
 <div class="review-overlay" id="reviewOverlay" onclick="closeReview()"></div>
@@ -452,9 +546,7 @@
       <h2 class="review-modal-title">Laisser un <em>avis</em></h2>
     </div>
     <button class="review-modal-close" onclick="closeReview()" aria-label="Fermer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
   <div class="review-modal-body">
@@ -500,9 +592,7 @@
       <h2 class="review-modal-title">Avis <em>réels</em> de nos clients</h2>
     </div>
     <button class="review-modal-close" onclick="closePublicReviews()" aria-label="Fermer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
   <div class="review-modal-body" id="publicReviewsBody">
@@ -513,47 +603,24 @@
 <!-- ========== RÉCLAMATION MODAL ========== -->
 <div class="recl-overlay" id="reclOverlay" onclick="closeReclamation()"></div>
 <div class="recl-modal" id="reclModal">
-
-  <!-- Header -->
   <div class="recl-modal-header">
     <div class="recl-modal-header-left">
       <span class="recl-modal-eyebrow">Assistance Client</span>
       <h2 class="recl-modal-title">Déposer une <em>réclamation</em></h2>
     </div>
     <button class="recl-modal-close" onclick="closeReclamation()" aria-label="Fermer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
-
-  <!-- Body -->
   <div class="recl-modal-body" id="reclModalBody">
-
-    <!-- Séjour auto-sélectionné -->
     <div id="reclStayInfo"></div>
-
-    <!-- Formulaire (masqué si aucune réservation) -->
     <div id="reclFormBody">
-
-      <!-- Description -->
       <div class="recl-field-section">
         <label class="recl-field-label" for="reclDescription">Décrivez votre problème</label>
-        <textarea
-          class="recl-textarea"
-          id="reclDescription"
-          placeholder="Ex : Le Wi-Fi ne fonctionne pas dans ma chambre depuis ce matin, j'ai essayé de me reconnecter plusieurs fois sans succès…"
-          rows="5"
-          maxlength="1000"
-          oninput="onDescriptionInput()"
-        ></textarea>
+        <textarea class="recl-textarea" id="reclDescription" placeholder="Ex : Le Wi-Fi ne fonctionne pas dans ma chambre depuis ce matin…" rows="5" maxlength="1000" oninput="onDescriptionInput()"></textarea>
         <span class="recl-char-count" id="reclCharCount">0 / 1000</span>
       </div>
-
-      <!-- Résultat détection ML -->
       <div class="recl-type-panel" id="reclTypePanel" style="display:none;"></div>
-
-      <!-- Sélecteur type manuel -->
       <div class="recl-type-select-wrap">
         <label class="recl-type-select-label">Type de réclamation</label>
         <p class="recl-type-select-sub">Détecté automatiquement · Modifiez si nécessaire</p>
@@ -564,16 +631,16 @@
           <option value="climatisation">❄️  Climatisation</option>
           <option value="chauffage">🔥  Chauffage</option>
           <option value="electricite">⚡  Électricité</option>
-          <option value="wifi">📶  Wi-Fi & Internet</option>
+          <option value="wifi">📶  Wi-Fi &amp; Internet</option>
           <option value="television">📺  Télévision</option>
-          <option value="bruit">🔊  Bruit & Nuisances</option>
+          <option value="bruit">🔊  Bruit &amp; Nuisances</option>
           <option value="proprete">🧹  Propreté</option>
-          <option value="literie">🛏️  Literie & Confort</option>
+          <option value="literie">🛏️  Literie &amp; Confort</option>
           <option value="restauration">🍽️  Restauration</option>
           <option value="petit_dejeuner">☕  Petit-déjeuner</option>
           <option value="room_service">🛎️  Room Service</option>
           <option value="piscine">🏊  Piscine</option>
-          <option value="spa">💆  Spa & Hammam</option>
+          <option value="spa">💆  Spa &amp; Hammam</option>
           <option value="parking">🚗  Parking</option>
           <option value="service_reception">👤  Service — Réception</option>
           <option value="service_menage">🧺  Service — Ménage</option>
@@ -583,23 +650,16 @@
           <option value="autre">📋  Autre</option>
         </select>
       </div>
-
-    </div><!-- /#reclFormBody -->
-
-  </div><!-- /#reclModalBody -->
-
-  <!-- Footer -->
+    </div>
+  </div>
   <div class="recl-modal-footer" id="reclModalFooter">
     <span class="recl-footer-note">Notre équipe traitera votre réclamation sous 24–48h</span>
     <div class="recl-footer-actions">
       <button class="btn-outline-sm" onclick="closeReclamation()">Annuler</button>
-      <button class="btn-gold-sm" id="reclSubmitBtn" onclick="submitReclamation()">
-        Soumettre la réclamation
-      </button>
+      <button class="btn-gold-sm" id="reclSubmitBtn" onclick="submitReclamation()">Soumettre la réclamation</button>
     </div>
   </div>
-
-</div><!-- /#reclModal -->
+</div>
 
 <!-- ========== CHAT ICON ========== -->
 <div class="chat-icon" id="chatIcon" onclick="toggleChat()">
@@ -649,7 +709,7 @@
 </div>
 <div class="notif-overlay" id="notifOverlay" onclick="toggleNotifications()"></div>
 
-<!-- ========== PUBLIC REVIEWS MODAL (login.html style) ========== -->
+<!-- ========== PUBLIC REVIEWS MODAL v2 ========== -->
 <div class="publicReviews-overlay" id="publicReviewsOverlay2"></div>
 <div class="publicReviews-modal" id="publicReviewsModal2">
   <div class="publicReviews-header">
@@ -664,14 +724,22 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS — ordre important
+     ═══════════════════════════════════════════════════════ -->
 <script src="dashboard.js"></script>
 <script src="nos_chambres.js"></script>
 <script src="mes_reservations.js"></script>
+<script src="mon_profil.js"></script>
 <script src="avis.js"></script>
 <script src="reclamation.js"></script>
+<script src="activites.js"></script>
+<script src="facture-paiement.js"></script>
+<script src="restaurant.js"></script>
+<script src="spa.js"></script>
 
 <script>
-/* ── Styles additionnels quick-btn réclamation ── */
+/* ── Styles quick-btn réclamation ── */
 (function () {
   const style = document.createElement('style');
   style.textContent = `
@@ -685,21 +753,117 @@
   document.head.appendChild(style);
 })();
 
-/* ── INIT Mes Réservations + hook nav ── */
+/* ── DOMContentLoaded principal ── */
 document.addEventListener('DOMContentLoaded', function () {
 
+  /* Init modules */
+  MonProfil.init();
   MesReservations.init();
+  FacturesPaiements.init();
+  SpaBienEtre.init();     // ← SPA
+  Restaurant.init();
+  Activites.init();
 
-  const navReservations = document.querySelector('[data-section="reservations"]');
+  /* Références nav */
   const navAccueil      = document.querySelector('[data-section="accueil"]');
+  const navReservations = document.querySelector('[data-section="reservations"]');
+  const navProfil       = document.querySelector('[data-section="profil"]');
+  const navChambres     = document.querySelector('[data-section="chambres"]');
+  const navActivites    = document.querySelector('[data-section="activites"]');
+  const navSpa          = document.querySelector('[data-section="spa"]');       // ← SPA
+  const navRestaurant   = document.querySelector('[data-section="restaurant"]');
+  const navFactures     = document.querySelector('[data-section="factures"]');
+
+  function setActiveNav(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  function hideAll() {
+    MonProfil.hide();
+    MesReservations.hide();
+    NosChambres.hide();
+    Activites.hide();
+    FacturesPaiements.hide();
+    SpaBienEtre.hide();   // ← SPA
+    Restaurant.hide();
+  }
+
+  if (navAccueil) {
+    navAccueil.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      showDashboardHome();
+    });
+  }
 
   if (navReservations) {
     navReservations.addEventListener('click', function (e) {
       e.preventDefault();
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      this.classList.add('active');
+      setActiveNav(this);
+      hideAll();
       document.querySelector('.topbar-greeting').textContent = 'Mes réservations,';
       MesReservations.show();
+    });
+  }
+
+  if (navProfil) {
+    navProfil.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      document.querySelector('.topbar-greeting').textContent = 'Espace personnel,';
+      MonProfil.show();
+    });
+  }
+
+  if (navChambres) {
+    navChambres.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      document.querySelector('.topbar-greeting').textContent = 'Nos chambres,';
+      NosChambres.show();
+    });
+  }
+
+  if (navActivites) {
+    navActivites.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      Activites.show();
+    });
+  }
+
+  /* ─── SPA handler ─────────────────────────────── */
+  if (navSpa) {
+    navSpa.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      SpaBienEtre.show();
+    });
+  }
+  /* ─────────────────────────────────────────────── */
+
+  if (navRestaurant) {
+    navRestaurant.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      Restaurant.show();
+    });
+  }
+
+  if (navFactures) {
+    navFactures.addEventListener('click', function (e) {
+      e.preventDefault();
+      setActiveNav(this);
+      hideAll();
+      document.querySelector('.topbar-greeting').textContent = 'Factures & paiements,';
+      FacturesPaiements.show();
     });
   }
 
@@ -707,46 +871,48 @@ document.addEventListener('DOMContentLoaded', function () {
   if (historySeeAllLink) {
     historySeeAllLink.addEventListener('click', function (e) {
       e.preventDefault();
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      if (navReservations) navReservations.classList.add('active');
+      setActiveNav(navReservations);
+      hideAll();
       document.querySelector('.topbar-greeting').textContent = 'Mes réservations,';
       MesReservations.show();
     });
   }
 
-  const navChambres = document.querySelector('[data-section="chambres"]');
-  if (navChambres) {
-    navChambres.addEventListener('click', function (e) {
-      e.preventDefault();
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelector('.topbar-greeting').textContent = 'Nos chambres,';
-      MesReservations.hide();
-      NosChambres.show();
-    });
-  }
-
-  if (navAccueil) {
-    navAccueil.addEventListener('click', function (e) {
-      e.preventDefault();
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelector('.topbar-greeting').textContent = 'Bon retour,';
-      MesReservations.hide();
-      NosChambres.hide();
-    });
-  }
-
-  document.querySelectorAll('.nav-item:not([data-section="reservations"]):not([data-section="chambres"])').forEach(item => {
+  /* Nav items non gérés → retour accueil */
+  document.querySelectorAll(
+    '.nav-item:not([data-section="reservations"])' +
+    ':not([data-section="chambres"]):not([data-section="profil"])' +
+    ':not([data-section="activites"]):not([data-section="accueil"])' +
+    ':not([data-section="factures"]):not([data-section="restaurant"])' +
+    ':not([data-section="spa"])'     // ← SPA exclu du fallback
+  ).forEach(item => {
     item.addEventListener('click', function () {
-      MesReservations.hide();
-      NosChambres.hide();
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      this.classList.add('active');
+      hideAll();
+      setActiveNav(this);
+      showDashboardHome();
     });
   });
 
+  /* Activités count patch */
+  const _origLoad = Activites.loadActivites;
+  Activites.loadActivites = async function () {
+    await _origLoad();
+    const heroTot = document.getElementById('heroActivitesTotal');
+    if (heroTot) {
+      const countLabel = document.getElementById('activitesCountLabel');
+      if (countLabel) heroTot.textContent = countLabel.textContent.replace(/\D/g, '') || '—';
+    }
+    Activites.buildFilters ? Activites.buildFilters() : void 0;
+  };
+
+  showDashboardHome();
+  buildNotifications();
 });
+
+function contactConcierge() {
+  window.location.href = 'tel:+21673681100';
+}
 </script>
+
 </body>
 </html>

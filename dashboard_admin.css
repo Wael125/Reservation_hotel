@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   KPI DASHBOARD  —  Luxury Dark Theme
+   ADMIN DASHBOARD  —  Luxury Dark Theme
    Font: Cormorant Garamond (display) + DM Sans (body)
    Les styles réservations sont dans gestion_reservation.css
 ═══════════════════════════════════════════════════════ */
@@ -422,11 +422,60 @@ body {
   animation: fadeIn .3s ease; z-index: 998;
 }
 
+/* ═══ NOTIFICATION BELL ═══ */
+.notification-bell-wrapper {
+  position: relative;
+}
+.btn-notification-bell {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: .78rem; cursor: pointer;
+  transition: .2s; font-family: inherit; position: relative;
+}
+.btn-notification-bell:hover { background: rgba(255,255,255,.1); color: var(--text); }
+.notification-badge {
+  position: absolute; top: -8px; right: -8px;
+  background: var(--rose); color: white; border-radius: 50%;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 700; border: 2px solid var(--bg-main);
+}
+.notification-dropdown {
+  position: absolute; top: 100%; right: 0; z-index: 1000;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); width: 380px; max-width: 95vw;
+  box-shadow: var(--shadow); margin-top: 8px; max-height: 500px; overflow-y: auto;
+}
+.notification-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  font-size: .82rem; font-weight: 600; color: var(--text); background: rgba(255,255,255,.02);
+}
+.notification-list {
+  display: flex; flex-direction: column; max-height: 420px; overflow-y: auto;
+}
+.notification-item {
+  padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.03);
+  cursor: pointer; transition: background .2s; font-size: .78rem;
+}
+.notification-item:hover { background: rgba(255,255,255,.05); }
+.notification-item.new { background: rgba(201,165,90,.08); border-left: 3px solid var(--gold); }
+.notification-item-type {
+  display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .65rem;
+  font-weight: 600; text-transform: uppercase; margin-bottom: 6px;
+  letter-spacing: .3px;
+}
+.notification-item-type.reclamation { background: rgba(224,123,138,.2); color: var(--rose); }
+.notification-item-type.client { background: rgba(78,205,196,.2); color: var(--teal); }
+.notification-item-type.reservation { background: rgba(201,165,90,.2); color: var(--gold); }
+.notification-item-text { color: var(--text-sub); margin-bottom: 4px; }
+.notification-item-time { font-size: .65rem; color: var(--text-muted); }
+
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 1100px) {
   .charts-grid { grid-template-columns: 1fr; }
   .chart-card.wide { grid-column: span 1; }
   .bottom-grid { grid-template-columns: 1fr; }
+  .notification-dropdown { width: calc(100vw - 32px); right: auto; left: 16px; }
 }
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }

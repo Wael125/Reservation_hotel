@@ -87,25 +87,48 @@ Tu dois identifier l'intent du message parmi :
 - "avis"        : le client veut donner un avis / note sur son séjour
                   (ex: "je veux donner mon avis", "laisser un commentaire", "noter mon séjour",
                        "j'ai été satisfait", "j'ai été déçu", "mon séjour était...",
-                       "I want to leave a review", "بدي أعطي رأيي", "نجم نعطي رأيي")
+                       "I want to leave a review", "بدي أعطي رأيي", "نجم نعطي رأيي",
+                       "je mets 4 étoiles", "je donne 3/5", "note : 5", "⭐⭐⭐",
+                       "c'était bien / excellent / décevant / passable")
 - "reclamation" : le client signale un problème / se plaint
                   (ex: "j'ai un problème avec...", "réclamation", "plainte", "ça ne fonctionne pas",
                        "je suis mécontent de...", "I have a complaint", "عندي مشكل", "عندي تشكي")
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PROCESSUS AVIS
+PROCESSUS AVIS — DÉTECTION AUTOMATIQUE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Dès que l'intent est "avis" :
-1. Accueille chaleureusement l'intention de l'avis.
-2. Demande une note globale de 1 à 5 étoiles (si non fournie).
-3. Demande un commentaire optionnel (si non fourni).
-4. Une fois note + commentaire (ou confirmation que pas de commentaire) obtenus,
-   mets review_ready = true.
-5. Quand [SYSTÈME] confirme l'enregistrement, remercie chaleureusement.
+
+DÉTECTION AUTOMATIQUE DE LA NOTE :
+- Extrais la note depuis le message si elle est présente sous n'importe quelle forme :
+  • Chiffre direct : "4", "3/5", "4 étoiles", "4 sur 5", "note 5"
+  • Étoiles emoji : "⭐⭐⭐" = 3, "★★★★" = 4
+  • Mots-clés : "excellent"/"parfait" = 5, "très bien"/"super" = 4,
+                "bien"/"correct" = 3, "passable"/"moyen" = 2, "décevant"/"mauvais" = 1
+  • En anglais : "excellent"=5, "very good"=4, "good"=3, "fair"=2, "poor"=1
+  • En arabe : "ممتاز"=5, "جيد جداً"=4, "جيد"=3, "مقبول"=2, "سيء"=1
+- Si la note est extraite, remplis review.note directement SANS la redemander.
+- Si aucune note détectable, demande une note de 1 à 5.
+
+DÉTECTION AUTOMATIQUE DU COMMENTAIRE :
+- Si le message contient une description du séjour (> 10 caractères), utilise-la comme commentaire.
+- Exemples : "mon séjour était fantastique, le spa est incroyable" → commentaire extrait.
+- Si un commentaire est détecté, remplis review.comment directement SANS le redemander.
+- Si note ET commentaire sont déjà dans le premier message, mets review_ready = true immédiatement.
+
+FLUX SELON LES CAS :
+1. Note + commentaire dans le message → review_ready = true directement.
+2. Note dans le message, pas de commentaire → confirme la note, demande un commentaire optionnel.
+3. Pas de note → demande la note (1-5), puis commentaire optionnel.
+4. Client dit "pas de commentaire" / "sans commentaire" / "non" → review.comment = "" et review_ready = true.
+
+Une fois review_ready = true, NE pose plus de questions — le système enregistre l'avis.
+Quand [SYSTÈME] confirme l'enregistrement (INSERT ou UPDATE), remercie chaleureusement.
+Si le client modifie un avis existant, informe-le naturellement que son avis a été mis à jour.
 
 Champs à collecter pour l'avis :
 - review_note : entier 1-5 ou null
-- review_comment : string ou null (optionnel)
+- review_comment : string ou null (optionnel, "" = pas de commentaire)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PROCESSUS RÉCLAMATION
@@ -182,7 +205,7 @@ Structure JSON :
   "depositAmount": acompte 30% (nombre) ou null,
   "ready_to_check": true si checkInDate + checkOutDate + roomType + adults sont non-null,
   "ready_to_confirm": true si les 10 champs data sont non-null ET client a confirmé explicitement,
-  "review_ready": true si intent=avis ET review.note est non-null,
+  "review_ready": true si intent=avis ET review.note est non-null ET (review.comment est non-null OU client a dit pas de commentaire),
   "reclamation_ready": true si intent=reclamation ET reclamation.description >= 10 chars
 }
 """
@@ -237,6 +260,51 @@ def all_data_complete(data: dict) -> bool:
     required = ["checkInDate", "checkOutDate", "roomType", "adults",
                 "children", "pension", "paymentDetails", "clientName", "email", "phone"]
     return all(data.get(k) is not None for k in required)
+
+
+# ── Détection locale de la note (fallback si l'IA rate) ──────────────────────
+def extract_note_from_text(text: str):
+    """
+    Tente d'extraire une note 1-5 depuis le texte brut du client.
+    Retourne un entier 1-5 ou None.
+    """
+    t = text.lower().strip()
+
+    # Étoiles emoji : ⭐⭐⭐ ou ★★★★
+    stars = len(re.findall(r'[⭐★]', text))
+    if 1 <= stars <= 5:
+        return stars
+
+    # Patterns numériques : "4/5", "4 sur 5", "note 4", "4 étoiles", simple "4"
+    patterns = [
+        r'\b([1-5])\s*/\s*5\b',
+        r'\b([1-5])\s+sur\s+5\b',
+        r'note\s*[:\-]?\s*([1-5])\b',
+        r'\b([1-5])\s+étoile',
+        r'\b([1-5])\s+star',
+        r'^([1-5])$',
+        r'\bnote\s+([1-5])\b',
+    ]
+    for p in patterns:
+        m = re.search(p, t)
+        if m:
+            return int(m.group(1))
+
+    # Mots-clés multi-langues
+    keywords = {
+        5: ['excellent', 'parfait', 'exceptionnel', 'fantastique', 'magnifique',
+            'perfect', 'outstanding', 'amazing', 'wonderful', 'ممتاز', 'رائع'],
+        4: ['très bien', 'super', 'très bon', 'very good', 'great', 'جيد جداً', 'زين'],
+        3: ['bien', 'correct', 'satisfait', 'good', 'ok', 'okay', 'جيد', 'بالمعقول'],
+        2: ['passable', 'moyen', 'bof', 'fair', 'average', 'مقبول', 'عادي'],
+        1: ['décevant', 'mauvais', 'nul', 'terrible', 'poor', 'bad', 'disappointing', 'سيء', 'ردي'],
+    }
+    for note, words in keywords.items():
+        for w in words:
+            if w in t:
+                return note
+
+    return None
 
 
 def ask_ai(message, history, current_data, current_review=None, current_reclamation=None):
@@ -299,11 +367,11 @@ def call_check_availability(data):
         r = requests.post(
             f"{API_BASE}/check_availability.php",
             json={
-                "checkInDate": data["checkInDate"],
+                "checkInDate":  data["checkInDate"],
                 "checkOutDate": data["checkOutDate"],
-                "roomType": data["roomType"],
-                "adults": data["adults"],
-                "children": data.get("children", 0)
+                "roomType":     data["roomType"],
+                "adults":       data["adults"],
+                "children":     data.get("children", 0)
             },
             headers={"Content-Type": "application/json"},
             timeout=60
@@ -349,7 +417,6 @@ def call_make_reservation(login_id, data, room):
         return {"status": "error", "message": str(e)}
 
 
-# ── Appel ML pour détection type réclamation ──
 def call_ml_detect(description: str) -> dict:
     try:
         r = requests.post(
@@ -365,45 +432,35 @@ def call_ml_detect(description: str) -> dict:
     return {"type": "autre", "confidence": 0.5, "label": "Autre", "fallback": True}
 
 
-# ══════════════════════════════════════════════════════════════════
-#  FIX : Passer login_id directement dans le body JSON
-#  Les PHP lront depuis $_POST / php://input, sans besoin de session
-# ══════════════════════════════════════════════════════════════════
-
 def call_submit_avis(login_id: str, note: int, commentaire: str) -> dict:
+    """
+    Soumet ou met à jour l'avis du client via avis.php.
+    Le PHP gère lui-même le UPSERT (INSERT ou UPDATE selon existence).
+    """
     try:
-        # 1. Récupérer la réservation éligible — on passe login_id en query param
-        r = requests.get(
-            f"{API_BASE}/avis.php",
-            params={"action": "reservations", "login_id": login_id},
-            timeout=10
-        )
-        resa_data = r.json()
-        reservation = resa_data.get("reservation")
-        if not reservation:
-            return {"success": False, "error": "Aucune réservation éligible pour soumettre un avis."}
-
-        # 2. Soumettre l'avis — login_id dans le body JSON
-        r2 = requests.post(
+        r = requests.post(
             f"{API_BASE}/avis.php",
             json={
-                "action":         "submit",
-                "login_id":       login_id,
-                "reservation_id": reservation["id"],
-                "note":           note,
-                "commentaire":    commentaire or ""
+                "action":      "submit",
+                "login_id":    login_id,
+                "note":        note,
+                "commentaire": commentaire or ""
             },
             headers={"Content-Type": "application/json"},
             timeout=10
         )
-        return r2.json()
+        # Lire texte brut pour détecter erreur PHP
+        raw = r.text
+        try:
+            return r.json()
+        except Exception:
+            return {"success": False, "error": f"Réponse serveur invalide : {raw[:200]}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 def call_submit_reclamation(login_id: str, description: str, detected_type: str) -> dict:
     try:
-        # 1. Récupérer la réservation éligible — login_id en query param
         r = requests.get(
             f"{API_BASE}/reclamation.php",
             params={"action": "reservation", "login_id": login_id},
@@ -414,7 +471,6 @@ def call_submit_reclamation(login_id: str, description: str, detected_type: str)
         if not reservation:
             return {"success": False, "error": "Aucune réservation éligible pour soumettre une réclamation."}
 
-        # 2. Soumettre la réclamation — login_id dans le body JSON
         r2 = requests.post(
             f"{API_BASE}/reclamation.php",
             json={
@@ -483,38 +539,69 @@ def chat():
 
     sess["data"] = merge_data(sess["data"], ai.get("data") or {})
 
-    # Merge review / reclamation fields
+    # ── Merge review ──────────────────────────────────────────────────────────
     ai_review = ai.get("review") or {}
-    if ai_review.get("note") is not None:
-        sess["review"]["note"] = ai_review["note"]
-    if ai_review.get("comment") is not None:
-        sess["review"]["comment"] = ai_review["comment"]
 
+    # Priorité : valeur retournée par l'IA
+    if ai_review.get("note") is not None:
+        sess["review"]["note"] = int(ai_review["note"])
+
+    # Fallback : détection locale si l'IA n'a pas extrait la note
+    if sess["review"]["note"] is None and intent == "avis":
+        detected_note = extract_note_from_text(message)
+        if detected_note:
+            sess["review"]["note"] = detected_note
+            print(f"[NOTE FALLBACK] Détectée localement : {detected_note}")
+
+    # Commentaire : "" accepté (= pas de commentaire)
+    ai_comment = ai_review.get("comment")
+    if ai_comment is not None:
+        sess["review"]["comment"] = ai_comment
+
+    # Si note détectée localement et review_ready pas encore true,
+    # vérifier si on peut le passer à true (note + commentaire ou note + "pas de commentaire")
+    if (not review_ready
+            and intent == "avis"
+            and sess["review"]["note"] is not None
+            and sess["review"]["comment"] is not None):
+        review_ready = True
+        print(f"[REVIEW READY FALLBACK] note={sess['review']['note']} comment={sess['review']['comment'][:30]!r}")
+
+    # ── Merge reclamation ──────────────────────────────────────────────────────
     ai_recl = ai.get("reclamation") or {}
     if ai_recl.get("description"):
         sess["reclamation"]["description"] = ai_recl["description"]
 
-    # ── 2. Annulation réservation ──
+    # ── 2. Annulation réservation ──────────────────────────────────────────────
     if intent == "cancellation":
         sess["history"].append({"role": "user",      "content": message})
         sess["history"].append({"role": "assistant", "content": reply})
         conversations[login_id] = new_session()
         return jsonify({"reply": reply, "intent": "cancellation"})
 
-    # ── 3. Traitement AVIS ──
+    # ── 3. Traitement AVIS ────────────────────────────────────────────────────
     if intent == "avis" and review_ready and sess["review"]["note"]:
         note        = int(sess["review"]["note"])
         commentaire = sess["review"].get("comment") or ""
 
-        print(f"[AVIS] login_id={login_id} | note={note} | comment={commentaire[:50]}")
+        print(f"[AVIS] login_id={login_id} | note={note} | comment={commentaire[:80]!r}")
         res = call_submit_avis(login_id, note, commentaire)
         print(f"[AVIS RESULT] {res}")
 
+        action = res.get("action", "")  # "created" ou "updated"
+
         if res.get("success"):
-            system_msg = (
-                f"[SYSTÈME] Avis enregistré avec succès : note {note}/5. "
-                f"Remercie chaleureusement le client pour son retour et son séjour."
-            )
+            if action == "updated":
+                system_msg = (
+                    f"[SYSTÈME] Avis mis à jour avec succès : note {note}/5. "
+                    f"Informe le client que son avis précédent a bien été modifié "
+                    f"et remercie-le chaleureusement."
+                )
+            else:
+                system_msg = (
+                    f"[SYSTÈME] Avis enregistré avec succès : note {note}/5. "
+                    f"Remercie chaleureusement le client pour son retour et son séjour."
+                )
         else:
             err = res.get("error", "inconnue")
             system_msg = (
@@ -527,7 +614,7 @@ def chat():
         ai2   = ask_ai(system_msg, sess["history"], sess["data"], sess["review"], sess["reclamation"])
         reply = ai2.get("reply", reply)
 
-        # Reset review state
+        # Reset review
         sess["review"] = {"note": None, "comment": None}
         sess["history"].append({"role": "user",      "content": system_msg})
         sess["history"].append({"role": "assistant", "content": reply})
@@ -536,11 +623,10 @@ def chat():
 
         return jsonify({"reply": reply, "intent": "avis"})
 
-    # ── 4. Traitement RÉCLAMATION ──
+    # ── 4. Traitement RÉCLAMATION ──────────────────────────────────────────────
     if intent == "reclamation" and reclamation_ready:
         description = sess["reclamation"].get("description", "")
         if description and len(description) >= 10:
-            # Détection ML du type
             ml_result     = call_ml_detect(description)
             detected_type = ml_result.get("type", "autre")
             type_label    = ml_result.get("label", "Autre")
@@ -572,7 +658,6 @@ def chat():
             ai2   = ask_ai(system_msg, sess["history"], sess["data"], sess["review"], sess["reclamation"])
             reply = ai2.get("reply", reply)
 
-            # Reset reclamation state
             sess["reclamation"] = {"description": None}
             sess["history"].append({"role": "user",      "content": system_msg})
             sess["history"].append({"role": "assistant", "content": reply})
@@ -581,7 +666,7 @@ def chat():
 
             return jsonify({"reply": reply, "intent": "reclamation"})
 
-    # ── 5. Disponibilité ──
+    # ── 5. Disponibilité ───────────────────────────────────────────────────────
     if ready_check and not sess["availability_checked"]:
         result = call_check_availability(sess["data"])
         sess["availability_checked"] = True
@@ -630,7 +715,7 @@ def chat():
 
         return jsonify({"reply": reply, "intent": intent, "data": sess["data"]})
 
-    # ── 6. Confirmation réservation ──
+    # ── 6. Confirmation réservation ───────────────────────────────────────────
     if ready_confirm and sess["room"] and all_data_complete(sess["data"]):
         print(f"[CONFIRM] login_id={login_id} | data={json.dumps(sess['data'], ensure_ascii=False)}")
 
@@ -684,7 +769,7 @@ def chat():
                 sess["history"] = sess["history"][-20:]
             return jsonify({"reply": reply, "intent": "error", "data": sess["data"]})
 
-    # ── 7. Historique normal ──
+    # ── 7. Historique normal ───────────────────────────────────────────────────
     sess["history"].append({"role": "user",      "content": message})
     sess["history"].append({"role": "assistant", "content": reply})
     if len(sess["history"]) > 20:
@@ -706,16 +791,16 @@ def debug(login_id):
     if not sess:
         return jsonify({"error": "Session introuvable"})
     return jsonify({
-        "data":                  sess["data"],
-        "room":                  sess["room"],
-        "review":                sess["review"],
-        "reclamation":           sess["reclamation"],
-        "availability_checked":  sess["availability_checked"],
-        "history_length":        len(sess["history"]),
-        "all_data_complete":     all_data_complete(sess["data"])
+        "data":                 sess["data"],
+        "room":                 sess["room"],
+        "review":               sess["review"],
+        "reclamation":          sess["reclamation"],
+        "availability_checked": sess["availability_checked"],
+        "history_length":       len(sess["history"]),
+        "all_data_complete":    all_data_complete(sess["data"])
     })
 
 
 if __name__ == "__main__":
-    print("🏨 Chatbot Hôtel v6 (avis + réclamations) — http://127.0.0.1:5000")
+    print("🏨 Chatbot Hôtel v7 (avis auto-detect + UPSERT) — http://127.0.0.1:5000")
     app.run(debug=True, host="0.0.0.0", port=5000)

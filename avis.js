@@ -1,10 +1,8 @@
 /* ============================================================
    AVIS.JS — Royal Mansour — version complète
-   - Pagination fluide (slide slow-motion, pas de rechargement)
-   - Flèche "suivant" visible seulement si has_more === true
-   - Flèche "précédent" visible seulement si page > 0
-   - Tri : avis les plus récents en premier (created_at DESC côté PHP)
-   - Auto-sélection de la réservation (checked_in > completed)
+   - 1 client = 1 seul avis modifiable (UPSERT)
+   - Toujours lié à la dernière réservation valide
+   - Pagination fluide (slide slow-motion)
    ============================================================ */
 
 (function () {
@@ -13,11 +11,12 @@
   /* ---- État global ---- */
   let _selectedResaId = null;
   let _rating         = 0;
+  let _isEdit         = false;   // true si l'utilisateur modifie un avis existant
 
   const MAX_CHARS    = 1000;
   const ratingLabels = ['', 'Décevant', 'Passable', 'Bien', 'Très bien', 'Excellent'];
 
-  /* ---- État pagination par cible ---- */
+  /* ---- État pagination ---- */
   const PAGE_SIZE = 8;
   const _state = {};
 
@@ -33,7 +32,6 @@
      ============================================================ */
   document.addEventListener('DOMContentLoaded', function () {
 
-    /* Compteur textarea (dashboard) */
     var ta = document.getElementById('reviewComment');
     if (ta) {
       ta.setAttribute('maxlength', MAX_CHARS);
@@ -42,7 +40,6 @@
       });
     }
 
-    /* Section avis publics sur login.html */
     var grid = document.getElementById('testimonialsGrid');
     if (grid) {
       loadPublicReviews('testimonialsGrid', 0);
@@ -52,7 +49,6 @@
   /* ============================================================
      PUBLIC REVIEWS — chargement + animation slide
      ============================================================ */
-
   async function loadPublicReviews(targetId, page, direction) {
     page      = parseInt(page || 0, 10);
     direction = direction || 'init';
@@ -100,7 +96,6 @@
     _setBtnsDisabled(targetId, false);
   }
 
-  /* ---- Slide transition ---- */
   function _slideTransition(container, newHtml, direction) {
     return new Promise(function (resolve) {
       var DURATION = 220;
@@ -135,17 +130,13 @@
   function _animateFadeIn(container) {
     container.style.transition = 'opacity 200ms cubic-bezier(.4,0,.2,1)';
     container.style.opacity    = '1';
-    setTimeout(function () {
-      container.style.transition = '';
-    }, 200);
+    setTimeout(function () { container.style.transition = ''; }, 200);
   }
 
-  /* ---- Contrôle des boutons ---- */
   function _updateTestiControls(targetId) {
     var btnNext = document.getElementById('testiNextBtn');
     var btnPrev = document.getElementById('testiPrevBtn');
     var st = _getState(targetId);
-
     if (btnPrev) btnPrev.style.display = st.page > 0 ? '' : 'none';
     if (btnNext) btnNext.style.display = st.has_more ? '' : 'none';
   }
@@ -157,7 +148,6 @@
     if (btnPrev) btnPrev.disabled = disabled;
   }
 
-  /* ---- Navigation paginée ---- */
   function showNextReviews() {
     var targetId = 'testimonialsGrid';
     var st = _getState(targetId);
@@ -173,7 +163,7 @@
   }
 
   /* ============================================================
-     RENDU D'UNE CARTE D'AVIS PUBLIC
+     RENDU CARTE AVIS PUBLIC
      ============================================================ */
   function renderPublicReviewCard(r) {
     var note      = Math.max(0, Math.min(5, parseInt(r.note || 0)));
@@ -247,7 +237,6 @@
       : '';
 
     return '<div class="testi-card">'
-
       + '<div class="testi-card-meta">'
       +   '<div class="testi-card-avatar">' + avatarSvg + '</div>'
       +   '<div class="testi-card-info">'
@@ -259,9 +248,7 @@
       +     '</div>'
       +   '</div>'
       + '</div>'
-
       + commentHtml
-
       + '<div class="testi-card-footer">'
       +   dateFooter
       +   '<span class="testi-verified">'
@@ -270,17 +257,18 @@
       +     'Séjour vérifié'
       +   '</span>'
       + '</div>'
-
       + '</div>';
   }
 
   /* ============================================================
-     OPEN REVIEW MODAL (connecté)
+     OPEN REVIEW MODAL
      ============================================================ */
   async function openReview() {
     _rating         = 0;
     _selectedResaId = null;
+    _isEdit         = false;
 
+    // Reset étoiles
     document.querySelectorAll('#reviewStars .star').forEach(function (s) { s.classList.remove('active'); });
     document.querySelectorAll('.star-sm').forEach(function (s) { s.classList.remove('active'); });
 
@@ -305,7 +293,7 @@
   }
 
   /* ============================================================
-     LOAD RESERVATION — auto-sélection
+     LOAD RESERVATION + avis existant
      ============================================================ */
   async function _loadReservation() {
     var infoEl = document.getElementById('reviewStayInfo');
@@ -319,6 +307,34 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
 
+      _isEdit = !!data.is_edit;
+
+      // Pré-remplir si avis existant
+      if (data.is_edit && data.existing_avis) {
+        var ex = data.existing_avis;
+
+        // Note
+        if (ex.note) {
+          _rating = parseInt(ex.note);
+          document.querySelectorAll('#reviewStars .star').forEach(function (s) {
+            s.classList.toggle('active', parseInt(s.dataset.val) <= _rating);
+          });
+          var rtEl = document.getElementById('reviewRatingText');
+          if (rtEl) rtEl.textContent = ratingLabels[_rating] || '';
+        }
+
+        // Commentaire
+        var ta = document.getElementById('reviewComment');
+        if (ta && ex.commentaire) {
+          ta.value = ex.commentaire;
+          _updateCharCount(ex.commentaire.length);
+        }
+      }
+
+      // Mettre à jour le libellé du bouton submit
+      var btn = document.getElementById('avisSubmitBtn');
+      if (btn) btn.textContent = _isEdit ? 'Modifier mon avis' : 'Publier mon avis';
+
       _renderStayInfo(data.reservation || null, data.source || 'none');
 
     } catch (e) {
@@ -330,23 +346,21 @@
     }
   }
 
-  /* ---- Rendu de la carte séjour auto-sélectionnée ---- */
+  /* ---- Rendu carte séjour ---- */
   function _renderStayInfo(r, source) {
     var infoEl = document.getElementById('reviewStayInfo');
     if (!infoEl) return;
 
-    /* Aucune réservation éligible */
     if (!r || source === 'none') {
       infoEl.innerHTML =
         '<div class="avis-empty">'
         + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7z"/><path d="M2 12h20"/><path d="M7 12V7"/></svg>'
-        + '<span>Vous devez avoir effectué au moins un séjour à l\'hôtel pour laisser un avis.</span>'
+        + '<span>Vous devez avoir effectué au moins un séjour (Checked_in, Checked_out ou Completed) pour laisser un avis.</span>'
         + '</div>';
       _disableSubmit(true);
       return;
     }
 
-    /* Auto-sélectionner cette réservation */
     _selectedResaId = r.id;
     _disableSubmit(false);
 
@@ -362,10 +376,17 @@
     var dotCls   = isActive ? 'avis-stay-dot--active' : 'avis-stay-dot--done';
     var dotTxt   = isActive ? '●' : '✓';
 
+    // Badge "Modification" si avis existant
+    var editBadge = _isEdit
+      ? '<span style="font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;'
+          + 'color:#f59e0b;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);'
+          + 'padding:2px 8px;margin-left:8px;">Modification</span>'
+      : '';
+
     infoEl.innerHTML =
       '<div class="avis-stay-card">'
       + '<div class="avis-stay-card-top">'
-      +   '<span class="avis-stay-label">' + label + '</span>'
+      +   '<span class="avis-stay-label">' + label + editBadge + '</span>'
       +   '<span class="avis-stay-dot ' + dotCls + '">' + dotTxt + '</span>'
       + '</div>'
       + '<div class="avis-stay-room">'
@@ -405,47 +426,63 @@
   }
 
   /* ============================================================
-     SUBMIT
+     SUBMIT (UPSERT — INSERT ou UPDATE)
      ============================================================ */
   async function submitReview() {
     _clearError();
 
-    if (!_selectedResaId) { _showError('Aucune réservation disponible pour laisser un avis.'); return; }
+    if (!_selectedResaId) { _showError('Aucune réservation éligible pour laisser un avis.'); return; }
     if (_rating === 0)    { _showError('Veuillez attribuer une note globale.'); return; }
 
     var commentaire = (document.getElementById('reviewComment')?.value || '').trim();
     var btn = document.getElementById('avisSubmitBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Publication en cours…'; }
-
-    try {
-      var res  = await fetch('avis.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action:         'submit',
-          reservation_id: _selectedResaId,
-          note:           _rating,
-          commentaire:    commentaire
-        })
-      });
-      var data = await res.json();
-
-      if (data.success) {
-        _toggleSuccessState(true);
-        if (typeof window.showToast === 'function') showToast('Merci pour votre avis ! ✨');
-        setTimeout(function () { closeReview(); }, 2500);
-      } else {
-        _showError(data.error || 'Une erreur est survenue.');
-        _resetSubmitBtn();
-      }
-    } catch (e) {
-      _showError('Erreur réseau. Vérifiez votre connexion.');
-      _resetSubmitBtn();
+    if (btn) {
+      btn.disabled    = true;
+      btn.textContent = _isEdit ? 'Modification en cours…' : 'Publication en cours…';
     }
+
+try {
+  var res = await fetch('avis.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      action:      'submit',
+      note:        _rating,
+      commentaire: commentaire,
+    })
+  });
+
+  // Lire le texte brut d'abord pour détecter les erreurs PHP
+  var rawText = await res.text();
+  var data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (_) {
+    // PHP a retourné du HTML d'erreur — on l'affiche de façon lisible
+    var phpError = rawText.replace(/<[^>]+>/g, '').trim().slice(0, 200);
+    throw new Error('Erreur serveur : ' + (phpError || 'réponse invalide'));
+  }
+
+  if (data.success) {
+    _toggleSuccessState(true, data.action === 'updated');
+    var toastMsg = data.action === 'updated'
+      ? 'Votre avis a été modifié ✨'
+      : 'Merci pour votre avis ! ✨';
+    if (typeof window.showToast === 'function') showToast(toastMsg);
+    setTimeout(function () { closeReview(); }, 2500);
+  } else {
+    _showError(data.error || 'Une erreur est survenue.');
+    _resetSubmitBtn();
+  }
+} catch (e) {
+  console.error(e);
+  _showError(e.message || 'Erreur inconnue.');
+  _resetSubmitBtn();
+}
   }
 
   /* ============================================================
-     CLOSE REVIEW MODAL
+     CLOSE
      ============================================================ */
   function closeReview() {
     var overlay = document.getElementById('reviewOverlay');
@@ -569,23 +606,28 @@
   /* ============================================================
      ÉTAT SUCCÈS
      ============================================================ */
-  function _toggleSuccessState(show) {
+  function _toggleSuccessState(show, isUpdate) {
     var body    = document.querySelector('.review-modal-body');
     var footer  = document.querySelector('.review-modal-footer');
     var success = document.getElementById('avisSuccessState');
 
     if (show) {
+      var titre = isUpdate ? 'Avis modifié !' : 'Merci pour votre avis !';
+      var sousTitre = isUpdate
+        ? 'Votre avis a bien été mis à jour.<br>Merci de nous aider à nous améliorer.'
+        : 'Votre retour a bien été publié.<br>Nous vous en remercions sincèrement.';
+
       if (!success) {
         success = document.createElement('div');
         success.id        = 'avisSuccessState';
         success.className = 'avis-success-state';
-        success.innerHTML =
-          '<div class="avis-success-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>'
-          + '<div class="avis-success-title">Merci pour votre avis !</div>'
-          + '<div class="avis-success-sub">Votre retour a bien été publié.<br>Nous vous en remercions sincèrement.</div>';
         var modal = document.getElementById('reviewModal');
         if (modal) modal.appendChild(success);
       }
+      success.innerHTML =
+          '<div class="avis-success-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>'
+        + '<div class="avis-success-title">' + titre + '</div>'
+        + '<div class="avis-success-sub">' + sousTitre + '</div>';
       success.style.display = 'flex';
       if (body)   body.style.display   = 'none';
       if (footer) footer.style.display = 'none';
@@ -631,7 +673,10 @@
 
   function _resetSubmitBtn() {
     var btn = document.getElementById('avisSubmitBtn');
-    if (btn) { btn.disabled = false; btn.textContent = 'Publier mon avis'; }
+    if (btn) {
+      btn.disabled    = false;
+      btn.textContent = _isEdit ? 'Modifier mon avis' : 'Publier mon avis';
+    }
   }
 
   function _esc(value) {

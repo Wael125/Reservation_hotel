@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Profil — Royal Mansour Iberostar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="mon_profil.css">
+</head>
+<body>
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Royal <span>Mansour</span></div>
+    <p class="sidebar-tagline">Espace Client</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Principal</div>
+    <a href="dashboard.php" class="nav-item" data-section="accueil">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Accueil</span>
+    </a>
+    <a href="reserver.html" class="nav-item" data-section="reserver">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Réserver</span>
+      <span class="nav-badge">Nouveau</span>
+    </a>
+    <a href="dashboard.php" class="nav-item" data-section="reservations">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Mes Réservations</span>
+    </a>
+    <a href="dashboard.php" class="nav-item" data-section="chambres">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7z"/><path d="M2 12h20"/><path d="M7 12V7"/></svg>
+      <span>Nos Chambres</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:24px;">Services</div>
+    <a href="dashboard.php" class="nav-item" data-section="spa">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Spa & Bien-être</span>
+    </a>
+    <a href="dashboard.php" class="nav-item" data-section="restaurant">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Restaurant</span>
+    </a>
+    <a href="dashboard.php" class="nav-item" data-section="activites">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Activités</span>
+    </a>
+
+    <div class="nav-section-label" style="margin-top:24px;">Compte</div>
+    <a href="mon_profil.html" class="nav-item active" data-section="profil">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Mon Profil</span>
+    </a>
+    <a href="dashboard.php#factures" class="nav-item" data-section="factures">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Factures & Paiements</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Sophie Martin</div>
+        <div class="sidebar-user-role">Client Gold</div>
+      </div>
+      <button class="sidebar-logout" onclick="logout()" title="Déconnexion">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ========== MOBILE TOPBAR ========== -->
+<div class="mobile-topbar">
+  <button class="burger-btn" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="mobile-logo">Royal <span>Mansour</span></div>
+  <div class="mobile-avatar">S</div>
+</div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="main-content">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <p class="topbar-greeting">Bon retour,</p>
+      <h1 class="topbar-name">Sophie <em>Martin</em></h1>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="currentDate">Mercredi 13 Mai 2026</span>
+      </div>
+      <button class="notif-btn" onclick="toggleNotifications()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-dot" id="notifDot"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== MON PROFIL SECTION ========== -->
+  <section class="profil-section" id="profilSection">
+
+    <!-- Header -->
+    <div class="profil-header">
+      <div class="profil-title-block">
+        <span class="profil-eyebrow">Compte client</span>
+        <h2 class="profil-title">Mon <em>Profil</em></h2>
+      </div>
+      <button class="profil-hero-edit-btn" onclick="MonProfil.openEditModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Modifier mon profil
+      </button>
+    </div>
+
+    <!-- Skeleton loader -->
+    <div class="profil-skeleton" id="profilSkeleton">
+      <div class="profil-skeleton-avatar skel"></div>
+      <div class="profil-skeleton-lines">
+        <div class="skel" style="height:20px; width:200px;"></div>
+        <div class="skel" style="height:12px; width:140px;"></div>
+        <div class="skel" style="height:12px; width:260px;"></div>
+      </div>
+    </div>
+
+    <!-- Hero card -->
+    <div class="profil-hero-card" id="profilHeroCard" style="display:none;">
+      <div class="profil-avatar-wrap">
+        <div class="profil-avatar" id="profilAvatar">—</div>
+      </div>
+      <div class="profil-hero-info">
+        <div class="profil-hero-name" id="profilHeroName">— <em>—</em></div>
+        <div class="profil-hero-username">
+          <span>Username</span>
+          <span id="profilHeroUsername">—</span>
+        </div>
+        <div class="profil-hero-meta">
+          <div class="profil-hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span id="profilHeroEmail">—</span>
+          </div>
+          <div class="profil-hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 010 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            <span id="profilHeroTel">—</span>
+          </div>
+          <div class="profil-hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            <span id="profilHeroPays">—</span>
+          </div>
+        </div>
+      </div>
+      <button class="profil-hero-edit-btn" onclick="MonProfil.openEditModal()" style="align-self:flex-start;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Modifier
+      </button>
+    </div>
+
+    <!-- Main grid -->
+    <div class="profil-main-grid" id="profilMainGrid" style="display:none;">
+
+      <!-- Informations personnelles -->
+      <div class="profil-info-card">
+        <div class="profil-card-header">
+          <span class="profil-card-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Informations personnelles
+          </span>
+          <button class="profil-card-edit-link" onclick="MonProfil.openEditModal('infos')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Modifier
+          </button>
+        </div>
+        <div class="profil-info-rows" id="profilInfoRows">
+          <div class="profil-info-row">
+            <span class="profil-info-label">Prénom</span>
+            <span class="profil-info-value" id="infoPrenom">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Nom</span>
+            <span class="profil-info-value" id="infoNom">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Genre</span>
+            <span class="profil-info-value" id="infoGenre">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Date de naissance</span>
+            <span class="profil-info-value" id="infoNaissance">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Pays</span>
+            <span class="profil-info-value" id="infoPays">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coordonnées & compte -->
+      <div class="profil-info-card">
+        <div class="profil-card-header">
+          <span class="profil-card-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Coordonnées & Compte
+          </span>
+          <button class="profil-card-edit-link" onclick="MonProfil.openEditModal('infos')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Modifier
+          </button>
+        </div>
+        <div class="profil-info-rows">
+          <div class="profil-info-row">
+            <span class="profil-info-label">E-mail</span>
+            <span class="profil-info-value" id="infoEmail">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Téléphone</span>
+            <span class="profil-info-value" id="infoTel">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Identifiant</span>
+            <span class="profil-info-value" id="infoUsername">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Rôle</span>
+            <span class="profil-info-value" id="infoRole">—</span>
+          </div>
+          <div class="profil-info-row">
+            <span class="profil-info-label">Mot de passe</span>
+            <span class="profil-info-value">
+              <span style="color:var(--muted);font-size:16px;letter-spacing:3px;">••••••••</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sécurité -->
+      <div class="profil-security-card">
+        <div class="profil-card-header">
+          <span class="profil-card-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Sécurité
+          </span>
+        </div>
+        <div class="profil-security-item">
+          <div class="profil-security-item-left">
+            <div class="profil-security-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <div>
+              <div class="profil-security-label">Mot de passe</div>
+              <div class="profil-security-sub">Modifiez votre mot de passe de connexion</div>
+            </div>
+          </div>
+          <button class="profil-security-action" onclick="MonProfil.openEditModal('securite')">Modifier</button>
+        </div>
+        <div class="profil-security-item">
+          <div class="profil-security-item-left">
+            <div class="profil-security-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div>
+              <div class="profil-security-label">Identifiant</div>
+              <div class="profil-security-sub" id="secUsername">—</div>
+            </div>
+          </div>
+          <button class="profil-security-action" onclick="MonProfil.openEditModal('securite')">Modifier</button>
+        </div>
+        <div class="profil-security-item">
+          <div class="profil-security-item-left">
+            <div class="profil-security-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <div class="profil-security-label">Adresse e-mail</div>
+              <div class="profil-security-sub" id="secEmail">—</div>
+            </div>
+          </div>
+          <button class="profil-security-action" onclick="MonProfil.openEditModal('infos')">Modifier</button>
+        </div>
+      </div>
+
+      <!-- Activité & Statistiques -->
+      <div class="profil-activity-card">
+        <div class="profil-card-header">
+          <span class="profil-card-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Activité & Statistiques
+          </span>
+        </div>
+        <div class="profil-activity-grid" id="profilActivityGrid">
+          <!-- tiles injectées par JS -->
+        </div>
+      </div>
+
+    </div><!-- /.profil-main-grid -->
+
+  </section><!-- /#profilSection -->
+
+  <!-- ========== MODAL MODIFICATION PROFIL ========== -->
+  <div class="profil-edit-overlay" id="profilEditOverlay" onclick="MonProfil.closeEditModal()"></div>
+  <div class="profil-edit-modal" id="profilEditModal">
+
+    <div class="profil-modal-header">
+      <div>
+        <span class="profil-eyebrow" style="font-size:8.5px;">Modifier</span>
+        <h2 class="profil-modal-title">Mon <em style="font-style:italic;color:var(--gold-light);">Profil</em></h2>
+      </div>
+      <button class="profil-modal-close" onclick="MonProfil.closeEditModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="profil-modal-tabs">
+      <button class="profil-modal-tab active" id="tabBtnInfos"    onclick="MonProfil.switchTab('infos')">Informations</button>
+      <button class="profil-modal-tab"         id="tabBtnSecurite" onclick="MonProfil.switchTab('securite')">Sécurité</button>
+    </div>
+
+    <!-- Feedback -->
+    <div class="profil-save-success" id="profilSaveSuccess">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Profil mis à jour avec succès.
+    </div>
+    <ul class="profil-errors-list" id="profilErrorsList"></ul>
+
+    <!-- Tab Contents (will be injected by JS) -->
+    <div class="profil-tab-panel active" id="tabInfos">
+      <div class="profil-form-grid">
+        <div class="profil-form-section-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Identité
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editPrenom">Prénom</label>
+          <input class="profil-input" type="text" id="editPrenom" placeholder="Votre prénom" oninput="MonProfil._markDirty()">
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editNom">Nom</label>
+          <input class="profil-input" type="text" id="editNom" placeholder="Votre nom de famille" oninput="MonProfil._markDirty()">
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editGenre">Genre</label>
+          <select class="profil-select" id="editGenre" onchange="MonProfil._markDirty()">
+            <option value="">— Non précisé —</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+            <option value="Autre">Autre</option>
+            <option value="Non précisé">Préfère ne pas préciser</option>
+          </select>
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editNaissance">Date de naissance</label>
+          <input class="profil-input" type="date" id="editNaissance" oninput="MonProfil._markDirty()">
+        </div>
+        <div class="profil-field full-width">
+          <label class="profil-field-label" for="editPays">Pays</label>
+          <input class="profil-input" type="text" id="editPays" placeholder="Ex : France, Tunisie…" oninput="MonProfil._markDirty()">
+        </div>
+        <div class="profil-form-section-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Coordonnées
+        </div>
+        <div class="profil-field full-width">
+          <label class="profil-field-label" for="editEmail">Adresse e-mail</label>
+          <input class="profil-input" type="email" id="editEmail" placeholder="votre@email.com" oninput="MonProfil._markDirty()">
+          <span class="profil-field-hint">Utilisée pour les confirmations de réservation</span>
+        </div>
+        <div class="profil-field full-width">
+          <label class="profil-field-label" for="editTelephone">Téléphone</label>
+          <input class="profil-input" type="tel" id="editTelephone" placeholder="+33 6 00 00 00 00" oninput="MonProfil._markDirty()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Tab -->
+    <div class="profil-tab-panel" id="tabSecurite">
+      <div class="profil-form-grid">
+        <div class="profil-form-section-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Identifiant de connexion
+        </div>
+        <div class="profil-field full-width">
+          <label class="profil-field-label" for="editUsername">Nom d'utilisateur</label>
+          <input class="profil-input" type="text" id="editUsername" placeholder="nom.utilisateur" oninput="MonProfil._markDirty()">
+          <span class="profil-field-hint">Entre 3 et 50 caractères</span>
+        </div>
+        <div class="profil-form-section-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Changer le mot de passe
+        </div>
+        <div class="profil-notice full-width">
+          Laissez les champs vides si vous ne souhaitez pas modifier votre mot de passe.
+        </div>
+        <div class="profil-field full-width">
+          <label class="profil-field-label" for="editCurrentPwd">Mot de passe actuel</label>
+          <div style="position:relative;">
+            <input class="profil-input" type="password" id="editCurrentPwd" placeholder="••••••••" oninput="MonProfil._markDirty()" style="padding-right:42px;">
+            <button type="button" onclick="MonProfil._togglePwd('editCurrentPwd','eyeCurrent')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;display:flex;align-items:center;">
+              <svg id="eyeCurrent" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editNewPwd">Nouveau mot de passe</label>
+          <div style="position:relative;">
+            <input class="profil-input" type="password" id="editNewPwd" placeholder="Min. 8 caractères" oninput="MonProfil._onNewPwdInput()" style="padding-right:42px;">
+            <button type="button" onclick="MonProfil._togglePwd('editNewPwd','eyeNew')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;display:flex;align-items:center;">
+              <svg id="eyeNew" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="profil-pwd-strength" id="pwdStrengthWrap" style="display:none;">
+            <div class="profil-pwd-bars">
+              <div class="profil-pwd-bar" id="pwdBar1"></div>
+              <div class="profil-pwd-bar" id="pwdBar2"></div>
+              <div class="profil-pwd-bar" id="pwdBar3"></div>
+            </div>
+            <span class="profil-pwd-label" id="pwdStrengthLabel">—</span>
+          </div>
+        </div>
+        <div class="profil-field">
+          <label class="profil-field-label" for="editConfirmPwd">Confirmer</label>
+          <div style="position:relative;">
+            <input class="profil-input" type="password" id="editConfirmPwd" placeholder="Répétez le mot de passe" oninput="MonProfil._markDirty()" style="padding-right:42px;">
+            <button type="button" onclick="MonProfil._togglePwd('editConfirmPwd','eyeConfirm')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;display:flex;align-items:center;">
+              <svg id="eyeConfirm" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="profil-modal-footer">
+      <button class="btn-outline-sm" onclick="MonProfil.closeEditModal()">Annuler</button>
+      <button class="btn-gold-sm" id="profilSaveBtn" onclick="MonProfil.saveProfile()">
+        Enregistrer les modifications
+      </button>
+    </div>
+
+  </div><!-- /#profilEditModal -->
+
+</main><!-- /.main-content -->
+
+<!-- ========== SCRIPTS ========== -->
+<script>
+  // Variables globales
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+  }
+
+  function logout() {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      window.location.href = 'logout.php';
+    }
+  }
+
+  function toggleNotifications() {
+    alert('Aucune nouvelle notification.');
+  }
+
+  // Mettre à jour la date actuelle
+  document.addEventListener('DOMContentLoaded', () => {
+    const dateEl = document.getElementById('currentDate');
+    if (dateEl) {
+      const today = new Date();
+      dateEl.textContent = today.toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    }
+  });
+</script>
+
+<script src="mon_profil.js"></script>
+
+<script>
+  // Initialiser Mon Profil
+  document.addEventListener('DOMContentLoaded', () => {
+    MonProfil.init();
+    MonProfil.show();
+  });
+</script>
+
+</body>
+</html>

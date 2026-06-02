@@ -70,14 +70,21 @@ function escHtml(value) {
 
 function hasExactCheckedInStatus(r) {
   if (!r) return false;
-  const s = String(r.status ?? r.Status ?? '').trim();
-  return s === 'Checked_in';
+  const s = String(r.status ?? r.Status ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  return s === 'checked_in';
 }
 
 /* ============================================
+   STATUTS QUI COMPTENT COMME "RÉALISÉS" (100%)
+   ============================================ */
+const STATUTS_REALISES  = ['checked_in', 'checked_out', 'completé', 'complete', 'complété', 'complétée'];
+const STATUTS_CONFIRMES = ['confirmée', 'confirmee'];
+
+/* ============================================
    CONDITION UNIQUE BANNIÈRE
-   Afficher seulement si status === 'Checked_in'.
-   Aucune condition sur checkInDate.
    ============================================ */
 function isCurrentCheckedInStay(r) {
   return hasExactCheckedInStatus(r);
@@ -102,17 +109,32 @@ function getReservationStatus(r) {
 
 function getBookingBadge(status) {
   const s = normalizeStatus(status);
-  if (s === 'confirmée') return { cls: 'badge--checkin', label: 'Confirmée' };
-  if (s === 'en attente') return { cls: 'badge--upcoming', label: 'En attente' };
-  if (s === 'checked_in') return { cls: 'badge--checkin', label: 'En cours' };
+  if (s === 'confirmée' || s === 'confirmee') return { cls: 'badge--checkin',   label: 'Confirmée'  };
+  if (s === 'en attente')                     return { cls: 'badge--upcoming',  label: 'En attente' };
+  if (s === 'checked_in')                     return { cls: 'badge--checkin',   label: 'En cours'   };
   if (s === 'cancelled' || s === 'annulé' || s === 'annule') return { cls: 'badge--cancelled', label: 'Annulé' };
   return { cls: 'badge--upcoming', label: 'À venir' };
 }
 
 /* ============================================
+   CALCUL MONTANT SELON STATUT
+   ============================================ */
+function getAmountByStatus(r) {
+  const s = normalizeStatus(r.status || r.Status);
+  const payment = String(r.paymentDetails || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const price = parseFloat(r.totalPrice) || 0;
+  if (payment.includes('paye le') || payment.includes('paid')) return price;
+  if (STATUTS_REALISES.includes(s))  return price;
+  if (STATUTS_CONFIRMES.includes(s)) return price * 0.30;
+  return 0;
+}
+
+/* ============================================
    SYSTÈME DE FIDÉLITÉ
-   5 pts/nuit + 1 pt/50 TND + 10 pts/séjour
-   Paliers : Bronze | Silver | Gold | Platinum | Diamond
    ============================================ */
 function computeLoyalty(resaList) {
   let totalNights = 0;
@@ -121,20 +143,22 @@ function computeLoyalty(resaList) {
 
   resaList.forEach(r => {
     const s = normalizeStatus(r.status || r.Status);
-    if (s === 'cancelled' || s === 'annule') return;
+    if (s === 'cancelled' || s === 'annulé' || s === 'annule' || s === 'en attente') return;
+    const amount = getAmountByStatus(r);
+    if (amount === 0) return;
+    totalSpent  += amount;
     totalNights += nightsBetween(r.checkInDate, r.checkOutDate);
-    totalSpent  += parseFloat(r.totalPrice) || 0;
     nbStays++;
   });
 
   const pts = Math.round(totalNights * 5 + (totalSpent / 50) + nbStays * 10);
 
   const paliers = [
-    { label: 'Bronze',   min: 0,   max: 49,       next: 'Silver',   nextMin: 50  },
-    { label: 'Silver',   min: 50,  max: 99,        next: 'Gold',     nextMin: 100 },
-    { label: 'Gold',     min: 100, max: 199,       next: 'Platinum', nextMin: 200 },
-    { label: 'Platinum', min: 200, max: 399,       next: 'Diamond',  nextMin: 400 },
-    { label: 'Diamond',  min: 400, max: Infinity,  next: null,       nextMin: null},
+    { label: 'Bronze',   min: 0,   max: 49,      next: 'Silver',   nextMin: 50   },
+    { label: 'Silver',   min: 50,  max: 99,       next: 'Gold',     nextMin: 100  },
+    { label: 'Gold',     min: 100, max: 199,      next: 'Platinum', nextMin: 200  },
+    { label: 'Platinum', min: 200, max: 399,      next: 'Diamond',  nextMin: 400  },
+    { label: 'Diamond',  min: 400, max: Infinity, next: null,       nextMin: null },
   ];
 
   const palier   = paliers.find(p => pts >= p.min && pts <= p.max) || paliers[0];
@@ -166,7 +190,7 @@ const LOYALTY_PERKS = {
 })();
 
 /* ============================================
-   MÉTÉO RÉELLE — Open-Meteo (sans clé API)
+   MÉTÉO RÉELLE — Open-Meteo
    Mahdia, Tunisie : lat=35.5047, lon=11.0622
    ============================================ */
 async function loadWeather() {
@@ -227,7 +251,6 @@ function buildNotifications() {
   const nextStay = stats.nextStay || null;
   const loyalty  = computeLoyalty(reservations);
 
-  // 1. Rappel séjour à venir
   if (nextStay && isFuture(nextStay.checkInDate)) {
     const days = daysUntil(nextStay.checkInDate);
     if (days <= 30) {
@@ -239,7 +262,6 @@ function buildNotifications() {
     }
   }
 
-  // 2. Points fidélité
   if (reservations.length > 0) {
     const { pts, palier } = loyalty;
     const txt = `Vous avez ${pts} point${pts>1?'s':''} — Statut ${palier.label}.`
@@ -249,13 +271,12 @@ function buildNotifications() {
                 time:'Calculé sur vos séjours', unread: true });
   }
 
-  // 3. Offre selon statut fidélité
   const offerMap = {
-    Bronze:   { txt:'-5% sur votre prochain séjour jusqu\'au 30 Juin.',                  unread:false },
-    Silver:   { txt:'-10% sur votre prochain séjour jusqu\'au 30 Juin.',                 unread:false },
-    Gold:     { txt:'-15% sur votre prochain séjour jusqu\'au 30 Juin.',                 unread:false },
-    Platinum: { txt:'-20% sur votre prochain séjour + surclassement offert.',            unread:true  },
-    Diamond:  { txt:'Séjour exclusif Diamond : accès complet all-inclusive offert.',     unread:true  },
+    Bronze:   { txt:'-5% sur votre prochain séjour jusqu\'au 30 Juin.',               unread:false },
+    Silver:   { txt:'-10% sur votre prochain séjour jusqu\'au 30 Juin.',              unread:false },
+    Gold:     { txt:'-15% sur votre prochain séjour jusqu\'au 30 Juin.',              unread:false },
+    Platinum: { txt:'-20% sur votre prochain séjour + surclassement offert.',         unread:true  },
+    Diamond:  { txt:'Séjour exclusif Diamond : accès complet all-inclusive offert.',  unread:true  },
   };
   const offer = offerMap[loyalty.palier.label];
   if (offer) {
@@ -263,8 +284,9 @@ function buildNotifications() {
                 text: offer.txt, time:'Valable jusqu\'au 30 Juin', unread: offer.unread });
   }
 
-  // 4. Checkout imminent — seulement si statut Checked_in
   const ongoing = reservations.find(hasExactCheckedInStatus);
+  const today = new Date();
+  today.setHours(0,0,0,0);
   if (ongoing) {
     const dLeft = daysUntil(ongoing.checkOutDate);
     const txt   = dLeft === 0 ? 'Votre départ est aujourd\'hui avant 12h00. Bon voyage !'
@@ -273,7 +295,6 @@ function buildNotifications() {
                 time:'Séjour en cours', unread: dLeft <= 1 });
   }
 
-  // Rendu
   const listEl = document.getElementById('notifList');
   if (!listEl) return;
 
@@ -302,46 +323,84 @@ function buildNotifications() {
 
 /* ============================================
    BANNIÈRE SÉJOUR EN COURS
-   CONDITION UNIQUE : status === 'Checked_in'
-   Si aucune réservation n'a ce statut, la bannière reste cachée.
    ============================================ */
 function initCheckinBanner() {
   const banner = document.getElementById('checkinBanner');
   if (!banner) return;
 
-  banner.style.display = 'none';
+  banner.style.display = 'flex';
   window._ONGOING_RESA = null;
 
   const ongoing = reservations.find(hasExactCheckedInStatus);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const nextStay = stats.nextStay || reservations
+    .filter(r => {
+      const status = normalizeStatus(r.status || r.Status);
+      return new Date(r.checkInDate) >= today
+        && ['en attente', 'confirmée', 'confirmee', 'confirmed'].includes(status);
+    })
+    .sort((a, b) => new Date(a.checkInDate) - new Date(b.checkInDate))[0];
 
-  if (!ongoing) {
+  const labelEl          = banner.querySelector('.checkin-banner-label');
+  const countdownLabelEl = banner.querySelector('.checkin-countdown-label');
+  const progressEl       = document.getElementById('checkinProgress');
+  const startEl          = document.getElementById('checkinStart');
+  const endEl            = document.getElementById('checkinEnd');
+
+  if (ongoing) {
+    window._ONGOING_RESA = ongoing;
+    if (labelEl)          labelEl.textContent          = 'Séjour en cours';
+    if (countdownLabelEl) countdownLabelEl.textContent = 'jours restants';
+
+    const roomEl = document.getElementById('checkinRoom');
+    if (roomEl) roomEl.textContent = ongoing.roomType + (ongoing.roomNumber ? ' · Chambre ' + ongoing.roomNumber : '');
+
+    const daysLeft    = Math.max(0, daysUntil(ongoing.checkOutDate));
+    document.getElementById('checkinDaysLeft').textContent = daysLeft;
+
+    const totalNights = nightsBetween(ongoing.checkInDate, ongoing.checkOutDate);
+    const pct         = totalNights > 0 ? Math.round(((totalNights - daysLeft) / totalNights) * 100) : 0;
+    setTimeout(() => { document.getElementById('checkinProgress').style.width = pct + '%'; }, 450);
+
+    document.getElementById('checkinStart').textContent = formatDateShort(ongoing.checkInDate);
+    document.getElementById('checkinEnd').textContent   = formatDateShort(ongoing.checkOutDate);
     return;
   }
 
-  banner.style.display = 'flex';
-  window._ONGOING_RESA = ongoing;
-
   const roomEl = document.getElementById('checkinRoom');
-  if (roomEl) roomEl.textContent = ongoing.roomType + (ongoing.roomNumber ? ' · Chambre ' + ongoing.roomNumber : '');
+  const daysEl = document.getElementById('checkinDaysLeft');
 
-  const daysLeft = daysUntil(ongoing.checkOutDate);
-  document.getElementById('checkinDaysLeft').textContent = daysLeft;
+  if (nextStay) {
+    if (labelEl)          labelEl.textContent          = 'Prochain séjour';
+    if (countdownLabelEl) countdownLabelEl.textContent = 'jours avant arrivée';
+    if (roomEl)           roomEl.textContent           = (nextStay.roomType || 'Chambre') + (nextStay.roomNumber ? ' · Chambre ' + nextStay.roomNumber : '');
+    if (daysEl)           daysEl.textContent           = Math.max(0, daysUntil(nextStay.checkInDate));
+    if (progressEl)       progressEl.style.width       = '0%';
+    if (startEl)          startEl.textContent          = formatDateShort(nextStay.checkInDate);
+    if (endEl)            endEl.textContent            = formatDateShort(nextStay.checkOutDate);
+    return;
+  }
 
-  const totalNights = nightsBetween(ongoing.checkInDate, ongoing.checkOutDate);
-  const pct = totalNights > 0 ? Math.round(((totalNights - daysLeft) / totalNights) * 100) : 0;
-  setTimeout(() => { document.getElementById('checkinProgress').style.width = pct + '%'; }, 450);
-
-  document.getElementById('checkinStart').textContent = formatDateShort(ongoing.checkInDate);
-  document.getElementById('checkinEnd').textContent   = formatDateShort(ongoing.checkOutDate);
+  if (labelEl)          labelEl.textContent          = 'Bienvenue';
+  if (countdownLabelEl) countdownLabelEl.textContent = 'séjour';
+  if (roomEl)           roomEl.textContent           = 'Aucun séjour en cours';
+  if (daysEl)           daysEl.textContent           = '—';
+  if (progressEl)       progressEl.style.width       = '0%';
+  if (startEl)          startEl.textContent          = 'À planifier';
+  if (endEl)            endEl.textContent            = 'Royal Mansour';
 }
 
 /* ============================================
-   NOS CHAMBRES
-   Données adaptées depuis Iberostar Royal El Mansour.
+   SHOW DASHBOARD HOME
    ============================================ */
-/* Rooms section logic moved to nos_chambres.js */
-
 function showDashboardHome() {
+  window.MonProfil?.hide();
+  window.MesReservations?.hide();
+  window.FacturesPaiements?.hide();
+  window.Activites?.hide();
+  window.Restaurant?.hide();
+  window.SpaBienEtre?.hide();   // ← SPA
   NosChambres?.hide();
   document.querySelectorAll('.stats-row, .dashboard-grid').forEach(el => { el.style.display = ''; });
   const greeting = document.querySelector('.topbar-greeting');
@@ -416,17 +475,14 @@ document.addEventListener('DOMContentLoaded', () => {
   /* --- Stat cards --- */
   const statValues = document.querySelectorAll('.stat-card-value');
 
-  // [0] Total réservations
   if (statValues[0]) {
     statValues[0].textContent = stats.total ?? reservations.length;
     const sub = statValues[0].closest('.stat-card-body')?.querySelector('.stat-card-sub');
     if (sub) sub.textContent = 'depuis votre inscription';
   }
 
-  // [1] Fidélité
   renderLoyalty();
 
-  // [2] Prochain séjour
   const nextStay = stats.nextStay || null;
   if (statValues[2]) {
     if (nextStay) {
@@ -441,13 +497,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // [3] Total dépensé
   if (statValues[3]) {
-    const total = stats.totalSpent ?? reservations.reduce((s,r) => s + parseFloat(r.totalPrice||0), 0);
+    const total = stats.totalSpent ?? reservations.reduce((s, r) => s + getAmountByStatus(r), 0);
     statValues[3].textContent = formatPrice(total);
     const sub = statValues[3].closest('.stat-card-body')?.querySelector('.stat-card-sub');
     const n   = stats.total ?? reservations.length;
     if (sub) sub.textContent = 'sur ' + n + ' séjour' + (n>1?'s':'');
+  }
+
+  /* --- SessionStorage stats pour mon_profil.js --- */
+  try {
+    const totalResa  = statValues[0]?.textContent?.trim() || '—';
+    const totalSpent = statValues[3]?.textContent?.trim() || '—';
+    const loyaltyVal = document.querySelector('.loyalty-status-val')?.textContent?.trim() || '—';
+    const loyaltyPts = document.getElementById('loyaltyPts')?.textContent?.match(/(\d+)/)?.[1] || '—';
+
+    sessionStorage.setItem('rm_activity_stats', JSON.stringify({
+      totalResa:     totalResa === '—' ? '—' : parseInt(totalResa),
+      totalSpent,
+      loyaltyPts:    loyaltyPts === '—' ? '—' : parseInt(loyaltyPts),
+      loyaltyStatus: loyaltyVal
+    }));
+  } catch(e) {
+    console.warn('Erreur sessionStorage:', e);
   }
 
   /* --- Carte prochaine réservation --- */
@@ -579,7 +651,8 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item => {
     document.getElementById('sidebar').classList.remove('mobile-open');
 
     const section = this.dataset.section;
-    if (section && section !== 'chambres' && section !== 'reservations') {
+    if (section && section !== 'chambres' && section !== 'reservations'
+        && section !== 'factures' && section !== 'spa') {
       showDashboardHome();
     }
   });
@@ -600,8 +673,8 @@ function logout() {
 let notifOpen = false;
 function toggleNotifications() {
   notifOpen = !notifOpen;
-  document.getElementById('notifPanel').classList.toggle('open', notifOpen);
-  document.getElementById('notifOverlay').classList.toggle('open', notifOpen);
+  document.getElementById('notifPanel').classList.toggle('open',    notifOpen);
+  document.getElementById('notifOverlay').classList.toggle('open',  notifOpen);
 }
 function markAllRead() {
   document.querySelectorAll('.notif-item--unread').forEach(n => n.classList.remove('notif-item--unread'));
@@ -614,7 +687,8 @@ function markAllRead() {
    QUICK ACTIONS
    ============================================ */
 function downloadInvoice() {
-  alert('Téléchargement de la facture en cours…');
+  if (window.FacturesPaiements?.openLatestInvoice()) return;
+  alert('Aucune facture disponible pour le moment.');
 }
 function contactConcierge() {
   window.location.href = 'tel:+21673681100';
@@ -697,7 +771,7 @@ function showToast(msg) {
   let toast = document.getElementById('dashToast');
   if (!toast) {
     toast = document.createElement('div');
-    toast.id = 'dashToast';
+    toast.id        = 'dashToast';
     toast.className = 'dash-toast';
     document.body.appendChild(toast);
   }
@@ -752,14 +826,18 @@ function openChatWithIntent(intentText) {
 function appendBot(text) {
   const box = document.getElementById('chatBox');
   const div = document.createElement('div');
-  div.className = 'message bot'; div.innerText = text;
-  box.appendChild(div); box.scrollTop = box.scrollHeight;
+  div.className = 'message bot';
+  div.innerText = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 function appendUser(text) {
   const box = document.getElementById('chatBox');
   const div = document.createElement('div');
-  div.className = 'message user'; div.innerText = text;
-  box.appendChild(div); box.scrollTop = box.scrollHeight;
+  div.className = 'message user';
+  div.innerText = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 function addMessage(text, type) {
   if (type === 'bot') appendBot(text); else appendUser(text);
@@ -768,9 +846,11 @@ function showTyping() {
   if (document.getElementById('typing')) return;
   const box = document.getElementById('chatBox');
   const div = document.createElement('div');
-  div.className = 'message typing'; div.id = 'typing';
+  div.className = 'message typing';
+  div.id        = 'typing';
   div.innerText = 'Yasmine écrit…';
-  box.appendChild(div); box.scrollTop = box.scrollHeight;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 function removeTyping() {
   document.getElementById('typing')?.remove();
@@ -785,9 +865,9 @@ async function sendMessage(message) {
   showTyping();
   try {
     const res  = await fetch('http://127.0.0.1:5000/chat', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, login_id: LOGIN_ID })
+      body:    JSON.stringify({ message, login_id: LOGIN_ID })
     });
     const data = await res.json();
     removeTyping();

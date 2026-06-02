@@ -1,0 +1,634 @@
+/* ============================================
+   ROYAL MANSOUR — spa.css
+   Section Spa & Bien-être
+   ============================================ */
+
+.spa-section {
+  animation: fadeUp .45s var(--ease) both;
+}
+
+.spa-hero {
+  min-height: 280px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(90deg, rgba(18,18,15,.96), rgba(18,18,15,.62), rgba(18,18,15,.18)),
+    url('images/Spa_Relaxation.png') center/cover;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 38px;
+  margin-bottom: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.spa-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.spa-hero-copy {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.spa-hero-meta {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.spa-eyebrow {
+  color: var(--gold-light);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.spa-title {
+  font-family: var(--serif);
+  font-size: 42px;
+  line-height: 1.05;
+  font-weight: 300;
+  color: var(--white);
+  margin: 8px 0 8px;
+}
+
+.spa-title em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.spa-subtitle {
+  max-width: 520px;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255,255,255,.72);
+  letter-spacing: .35px;
+}
+
+.spa-hero-stat {
+  min-width: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.spa-hero-stat-val {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: #fff4c2;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,.72);
+}
+
+.spa-hero-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.9);
+  text-align: right;
+  text-shadow: 0 2px 10px rgba(0,0,0,.7);
+}
+
+.spa-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+}
+
+.spa-filter {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-light);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.spa-filter:hover,
+.spa-filter.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+
+.spa-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 22px;
+  align-items: start;
+}
+
+.spa-treatments-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.spa-card {
+  background: var(--charcoal-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  animation: fadeUp .35s var(--ease) both;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+}
+
+.spa-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  transform: translateY(-2px);
+}
+
+.spa-card-img {
+  min-height: 170px;
+  background-position: center;
+  background-size: cover;
+  position: relative;
+}
+
+.spa-card-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.42));
+}
+
+.spa-tag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,.24);
+  background: rgba(10,10,10,.48);
+  color: rgba(255,255,255,.92);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.spa-tag--signature { color: #fff4c2; border-color: rgba(201,168,76,.55); }
+.spa-tag--tradition { color: #bfe8d0; border-color: rgba(97,190,135,.45); }
+.spa-tag--relax { color: #cdd6ff; border-color: rgba(129,147,255,.45); }
+.spa-tag--face { color: #ffd2df; border-color: rgba(255,152,183,.45); }
+.spa-tag--duo { color: #f9d8ad; border-color: rgba(249,177,91,.45); }
+.spa-tag--energy { color: #d5ffef; border-color: rgba(96,231,187,.45); }
+
+.spa-card-body {
+  padding: 20px;
+}
+
+.spa-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.spa-card-top h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.08;
+  font-weight: 300;
+  color: var(--white);
+}
+
+.spa-card-top span {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.spa-card-desc {
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.65;
+  font-weight: 300;
+  margin-bottom: 14px;
+}
+
+.spa-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.spa-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.spa-card-meta svg {
+  width: 12px;
+  height: 12px;
+  color: var(--gold);
+}
+
+.spa-benefits {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.spa-benefits span {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.spa-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.spa-outline-btn,
+.spa-gold-btn,
+.spa-contact-btn {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.spa-outline-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.spa-gold-btn,
+.spa-contact-btn {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--charcoal);
+}
+
+.spa-gold-btn:hover,
+.spa-contact-btn:hover {
+  background: var(--gold-light);
+  border-color: var(--gold-light);
+  transform: translateY(-1px);
+}
+
+.spa-detail {
+  display: none;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.spa-detail.open {
+  display: block;
+}
+
+.spa-side-panel {
+  border: 1px solid var(--border);
+  background: var(--charcoal-2);
+  padding: 22px;
+  position: sticky;
+  top: 96px;
+}
+
+.spa-side-header h3 {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--white);
+}
+
+.spa-advice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 22px 0;
+}
+
+.spa-advice-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.spa-advice-item span {
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.spa-advice-item p {
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.spa-contact-btn {
+  width: 100%;
+}
+
+.spa-info-strip {
+  margin-top: 22px;
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--charcoal-2);
+}
+
+.spa-info-item {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border-right: 1px solid var(--border);
+}
+
+.spa-info-item:last-child {
+  border-right: none;
+}
+
+.spa-info-icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(201,168,76,.26);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spa-info-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.spa-info-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.spa-info-item strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.spa-booking-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.62);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 1200;
+}
+
+.spa-booking-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.spa-booking-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 42px);
+  overflow: auto;
+  transform: translate(-50%, -48%) scale(.98);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--charcoal);
+  border: 1px solid var(--border-hover);
+  box-shadow: 0 24px 80px rgba(0,0,0,.46);
+  z-index: 1201;
+  transition: opacity .2s, transform .2s;
+}
+
+.spa-booking-modal.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.spa-booking-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spa-booking-header h3 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--white);
+  margin: 7px 0 4px;
+}
+
+.spa-booking-header p {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.spa-modal-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spa-modal-close:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.spa-modal-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.spa-booking-body {
+  padding: 24px 26px 8px;
+}
+
+.spa-booking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.spa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.spa-field--full {
+  grid-column: 1 / -1;
+}
+
+.spa-field label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.spa-field input,
+.spa-field select,
+.spa-field textarea {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  background: var(--charcoal-2);
+  color: var(--text);
+  padding: 0 12px;
+  font-family: var(--sans);
+  font-size: 13px;
+  outline: none;
+}
+
+.spa-field textarea {
+  min-height: 92px;
+  resize: vertical;
+  padding-top: 12px;
+}
+
+.spa-field input:focus,
+.spa-field select:focus,
+.spa-field textarea:focus {
+  border-color: var(--gold);
+}
+
+.spa-booking-error {
+  min-height: 20px;
+  margin-top: 14px;
+  color: #f87171;
+  font-size: 12px;
+}
+
+.spa-booking-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 26px 24px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 1100px) {
+  .spa-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .spa-side-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .spa-hero {
+    min-height: 320px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 28px 22px;
+  }
+
+  .spa-hero-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .spa-title {
+    font-size: 34px;
+  }
+
+  .spa-treatments-grid,
+  .spa-info-strip,
+  .spa-booking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spa-info-item {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spa-info-item:last-child {
+    border-bottom: none;
+  }
+
+  .spa-card-actions,
+  .spa-booking-footer {
+    flex-direction: column;
+  }
+
+  .spa-card-actions button,
+  .spa-booking-footer button {
+    width: 100%;
+  }
+}
