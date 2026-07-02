@@ -9,7 +9,7 @@
 ══════════════════════════════════════════ */
 .hist-stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -287,10 +287,10 @@
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 860px) {
-  .hist-stats-row { grid-template-columns: 1fr 1fr; }
+  .hist-stats-row { grid-template-columns: repeat(3, 1fr); }
   .trans-panel-box { width: 100vw; }
   #transBadgeWrap  { bottom: 70px; right: 16px; }
 }
 @media (max-width: 560px) {
-  .hist-stats-row { grid-template-columns: 1fr; }
+  .hist-stats-row { grid-template-columns: 1fr 1fr; }
 }

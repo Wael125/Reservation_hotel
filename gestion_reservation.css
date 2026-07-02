@@ -217,10 +217,14 @@
   letter-spacing: .4px;
   white-space: nowrap;
 }
-.res-badge.confirmée   { background: rgba(78,205,196,.15); color: var(--teal); }
-.res-badge.pending     { background: rgba(201,165,90,.15); color: var(--gold); }
-.res-badge.cancelled   { background: rgba(224,123,138,.15); color: var(--rose); }
-.res-badge.checked_out { background: rgba(155,143,232,.15); color: var(--violet); }
+.res-badge.confirmée   { background: rgba(46,125,82,.15);   color: #2e7d52; border: 1px solid rgba(46,125,82,.3);   }
+.res-badge.pending     { background: rgba(244,162,97,.15);  color: #f4a261; border: 1px solid rgba(244,162,97,.3);  }
+.res-badge.cancelled   { background: rgba(224,123,138,.15); color: var(--rose); border: 1px solid rgba(224,123,138,.3); }
+.res-badge.refused     { background: rgba(150,150,150,.12); color: #9ca3af; border: 1px solid rgba(150,150,150,.25); }
+.res-badge.checked_in  { background: rgba(78,205,196,.15);  color: var(--teal); border: 1px solid rgba(78,205,196,.3);  }
+.res-badge.checked_out { background: rgba(155,143,232,.15); color: var(--violet); border: 1px solid rgba(155,143,232,.3); }
+.res-badge.completed   { background: rgba(201,165,90,.15);  color: var(--gold); border: 1px solid rgba(201,165,90,.3);  }
+.res-badge.supprime    { background: rgba(100,100,100,.12); color: #6b7280; border: 1px solid rgba(100,100,100,.2); }
 
 /* ── Boutons d'action compacts (icônes) ── */
 .res-action-group {
@@ -241,20 +245,21 @@
   font-family: inherit;
   flex-shrink: 0;
 }
-/* Confirmer */
+/* Confirmer — vert */
 .res-btn-icon.confirm {
-  background: rgba(78,205,196,.1);
-  border-color: rgba(78,205,196,.25);
-  color: var(--teal);
+  background: rgba(46,125,82,.15);
+  border-color: rgba(46,125,82,.3);
+  color: #2e7d52;
 }
-.res-btn-icon.confirm:hover { background: rgba(78,205,196,.25); }
-/* Annuler statut */
+.res-btn-icon.confirm:hover { background: rgba(46,125,82,.28); }
+
+/* Refuser — rouge/rose */
 .res-btn-icon.cancel-status {
-  background: rgba(201,165,90,.1);
-  border-color: rgba(201,165,90,.25);
-  color: var(--gold);
+  background: rgba(224,123,138,.12);
+  border-color: rgba(224,123,138,.3);
+  color: var(--rose);
 }
-.res-btn-icon.cancel-status:hover { background: rgba(201,165,90,.22); }
+.res-btn-icon.cancel-status:hover { background: rgba(224,123,138,.25); }
 /* Modifier */
 .res-btn-icon.edit {
   background: rgba(155,143,232,.1);

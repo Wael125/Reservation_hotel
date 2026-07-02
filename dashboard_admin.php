@@ -1,16 +1,9 @@
 <?php
 /**
  * dashboard_admin.php — Point d'entrée principal du dashboard admin
- *
- * GET ?action=all  → retourne les données JSON pour le dashboard
- * Sinon            → sert dashboard_admin.html (avec vérification de session admin)
  */
 
 session_start();
-
-// ─────────────────────────────────────────────────────────
-//  Helpers d'accès
-// ─────────────────────────────────────────────────────────
 
 function redirectForDashboard(): void
 {
@@ -31,10 +24,6 @@ function denyApiAccess(): void
     echo json_encode(['error' => 'Acces refuse']);
     exit;
 }
-
-// ─────────────────────────────────────────────────────────
-//  CORS (Live Server : ports 3000 / 5500 / 5501)
-// ─────────────────────────────────────────────────────────
 
 $allowedOrigins = [
     'http://localhost:3000',
@@ -57,50 +46,144 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// ─────────────────────────────────────────────────────────
-//  Routing
-// ─────────────────────────────────────────────────────────
+function query(PDO $pdo, string $sql, array $params = []): PDOStatement
+{
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt;
+}
+
+function isCancelledCondition(string $column = 'status'): string
+{
+    return "LOWER(COALESCE($column, '')) LIKE 'annul%'
+            OR LOWER(COALESCE($column, '')) IN ('cancelled','canceled','refusé','refuse')";
+}
 
 $action = $_GET['action'] ?? null;
 
+// ══════════════════════════════════════════════════════════
+//  ACTION : notifications
+// ══════════════════════════════════════════════════════════
+
 if ($action === 'notifications') {
+
     if (!isset($_SESSION['login_id']) || (($_SESSION['role'] ?? 'client') !== 'admin')) {
         denyApiAccess();
     }
+
     header('Content-Type: application/json; charset=UTF-8');
-    require 'db.php';
-    
-    // Dernières réclamations (dernières 5)
-    $reclamations = query($pdo,
-        'SELECT id, clientName, priorite, created_at FROM reclamation ORDER BY created_at DESC LIMIT 5'
-    )->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Derniers clients (derniers 5)
-    $clients = query($pdo,
-        'SELECT id, firstName, lastName, created_at FROM customer ORDER BY created_at DESC LIMIT 5'
-    )->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Dernières réservations (dernières 5)
-    $reservations = query($pdo,
-        'SELECT id, clientName, roomType, createdAt FROM reservation ORDER BY id DESC LIMIT 5'
-    )->fetchAll(PDO::FETCH_ASSOC);
-    
-    echo json_encode([
-        'reclamations' => $reclamations,
-        'clients' => $clients,
-        'reservations' => $reservations,
-    ], JSON_THROW_ON_ERROR);
+    require_once 'db.php';
+
+    $today = date('Y-m-d');
+
+    try {
+
+        // ── 1. Check-in du jour ───────────────────────────────
+        // Réservations confirmées dont l'arrivée est aujourd'hui (pas encore checked_in)
+        $checkinsToday = query($pdo, "
+            SELECT id, clientName, roomType, roomNumber,
+                   checkInDate AS eventDate, status,
+                   'checkin' AS event_type
+            FROM reservation
+            WHERE DATE(checkInDate) = :today
+              AND LOWER(COALESCE(status,'')) IN ('confirmée','confirmee','confirmed','en attente')
+            ORDER BY checkInDate ASC
+        ", [':today' => $today])->fetchAll(PDO::FETCH_ASSOC);
+
+        // ── 2. Check-out du jour ──────────────────────────────
+        // Réservations checked_out ou completé dont le départ est aujourd'hui
+        $checkoutsToday = query($pdo, "
+            SELECT id, clientName, roomType, roomNumber,
+                   checkOutDate AS eventDate, status,
+                   'checkout' AS event_type
+            FROM reservation
+            WHERE DATE(checkOutDate) = :today
+              AND LOWER(COALESCE(status,'')) IN (
+                  'checked_in','checked in',
+                  'checked_out','checked out',
+                  'completé','complete','completed',
+                  'confirmée','confirmee','confirmed'
+              )
+            ORDER BY checkOutDate ASC
+        ", [':today' => $today])->fetchAll(PDO::FETCH_ASSOC);
+
+        // ── 3. Nouvelles réservations (récentes) ──────────────
+        $newReservations = query($pdo, "
+            SELECT id, clientName, roomType, totalPrice,
+                   status AS Status,
+                   checkInDate AS createdAt
+            FROM reservation
+            ORDER BY id DESC
+            LIMIT 20
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        // ── 4. Nouveaux clients (48h via id récents) ──────────
+        $newClients = query($pdo, "
+            SELECT id, nom, prenom, email
+            FROM customer
+            ORDER BY id DESC
+            LIMIT 10
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        // ── 5. Réclamations récentes ou ouvertes ──────────────
+        $newReclamations = query($pdo, "
+            SELECT
+                r.id,
+                CONCAT(COALESCE(c.nom,''), ' ', COALESCE(c.prenom,'')) AS clientName,
+                r.urgence    AS priorite,
+                r.statut,
+                r.description,
+                r.type,
+                r.created_at
+            FROM reclamations r
+            LEFT JOIN customer c ON c.id = r.customer_id
+            WHERE LOWER(COALESCE(r.statut,'')) IN ('ouverte', 'ouvert', 'open', 'en_cours')
+               OR r.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY
+                CASE COALESCE(r.urgence,'')
+                    WHEN 'Élevée'  THEN 1
+                    WHEN 'Moyenne' THEN 2
+                    WHEN 'Faible'  THEN 3
+                    ELSE 4
+                END,
+                r.created_at DESC
+            LIMIT 50
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success'      => true,
+            'today_events' => array_merge($checkinsToday, $checkoutsToday),
+            'reservations' => $newReservations,
+            'clients'      => $newClients,
+            'reclamations' => $newReclamations,
+        ], JSON_THROW_ON_ERROR);
+
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error'   => $e->getMessage(),
+        ]);
+    }
     exit;
 }
+
+// ══════════════════════════════════════════════════════════
+//  Servir le HTML
+// ══════════════════════════════════════════════════════════
 
 if ($action !== 'all') {
     redirectForDashboard();
     header('Content-Type: text/html; charset=UTF-8');
-    echo '<script>window.LOGIN_ID = '   . json_encode($_SESSION['login_id'])          . ';';
+    echo '<script>window.LOGIN_ID = '   . json_encode($_SESSION['login_id'])            . ';';
     echo 'window.ADMIN_NAME = '         . json_encode($_SESSION['username'] ?? 'Admin') . ';</script>';
     include 'dashboard_admin.html';
     exit;
 }
+
+// ══════════════════════════════════════════════════════════
+//  ACTION : all (données KPI dashboard)
+// ══════════════════════════════════════════════════════════
 
 if (!isset($_SESSION['login_id']) || (($_SESSION['role'] ?? 'client') !== 'admin')) {
     denyApiAccess();
@@ -111,39 +194,6 @@ header('Content-Type: application/json; charset=UTF-8');
 require 'db.php';
 require_once 'update_room_availability.php';
 
-// ─────────────────────────────────────────────────────────
-//  Utilitaires
-// ─────────────────────────────────────────────────────────
-
-function query(PDO $pdo, string $sql, array $params = []): PDOStatement
-{
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    return $stmt;
-}
-
-/**
- * Condition SQL pour les statuts "annulé/refusé" exclus du revenu.
- */
-function isCancelledCondition(string $column = 'Status'): string
-{
-    return "LOWER(COALESCE($column, '')) LIKE 'annul%'
-            OR LOWER(COALESCE($column, '')) IN ('cancelled','canceled','refusé','refuse')";
-}
-
-/**
- * Condition SQL pour les chambres occupées.
- * La colonne availability contient exactement : 'Disponible', 'Occupé', 'Maintenance'
- */
-function isOccupiedCondition(string $column = 'availability'): string
-{
-    return "COALESCE($column, '') = 'Occupé'";
-}
-
-// ─────────────────────────────────────────────────────────
-//  Fonctions de données
-// ─────────────────────────────────────────────────────────
-
 function getKPIs(PDO $pdo): array
 {
     $totalReservations = (int) query($pdo, 'SELECT COUNT(*) FROM reservation')->fetchColumn();
@@ -151,38 +201,49 @@ function getKPIs(PDO $pdo): array
     $totalRevenue = (float) query($pdo,
         'SELECT COALESCE(SUM(totalPrice), 0)
          FROM reservation
-         WHERE NOT (' . isCancelledCondition('Status') . ')'
+         WHERE NOT (' . isCancelledCondition('status') . ')'
     )->fetchColumn();
 
     $totalCustomers = (int) query($pdo, 'SELECT COUNT(*) FROM customer')->fetchColumn();
 
-// ── Check-in du jour ──────────────────────────────────
-$todayCheckinTotal = (int) query($pdo,
-    "SELECT COUNT(*) FROM reservation
-     WHERE DATE(checkInDate) = CURDATE()
-       AND LOWER(COALESCE(Status,'')) IN ('confirmee', 'checked_in', 'checked in')"
-)->fetchColumn();
+    // ── Check-in du jour ─────────────────────────────────
+    // Total : confirmées + en attente ayant checkInDate = aujourd'hui
+    $todayCheckinTotal = (int) query($pdo,
+        "SELECT COUNT(*) FROM reservation
+         WHERE DATE(checkInDate) = CURDATE()
+           AND LOWER(COALESCE(status,'')) IN (
+               'confirmée','confirmee','confirmed',
+               'en attente','pending',
+               'checked_in','checked in'
+           )"
+    )->fetchColumn();
 
-$todayCheckinDone = (int) query($pdo,
-    "SELECT COUNT(*) FROM reservation
-     WHERE DATE(checkInDate) = CURDATE()
-       AND LOWER(COALESCE(Status,'')) IN ('checked_in','checked in')"
-)->fetchColumn();
+    // Done : ceux déjà checked_in
+    $todayCheckinDone = (int) query($pdo,
+        "SELECT COUNT(*) FROM reservation
+         WHERE DATE(checkInDate) = CURDATE()
+           AND LOWER(COALESCE(status,'')) IN ('checked_in','checked in')"
+    )->fetchColumn();
 
-// ── Check-out du jour ─────────────────────────────────
-$todayCheckoutTotal = (int) query($pdo,
-    "SELECT COUNT(*) FROM reservation
-     WHERE DATE(checkOutDate) = CURDATE() - INTERVAL 1 DAY
-       AND LOWER(COALESCE(Status,'')) IN ('checked_in','checked out','checked_in','checked_out')"
-)->fetchColumn();
+    // ── Check-out du jour ─────────────────────────────────
+    // Total : tous ceux dont le checkOutDate est aujourd'hui et qui sont en séjour
+    $todayCheckoutTotal = (int) query($pdo,
+        "SELECT COUNT(*) FROM reservation
+         WHERE DATE(checkOutDate) = CURDATE()
+           AND LOWER(COALESCE(status,'')) IN (
+               'checked_in','checked in',
+               'confirmée','confirmee','confirmed',
+               'checked_out','checked out'
+           )"
+    )->fetchColumn();
 
-$todayCheckoutDone = (int) query($pdo,
-    "SELECT COUNT(*) FROM reservation
-     WHERE DATE(checkOutDate) = CURDATE() - INTERVAL 1 DAY
-       AND LOWER(COALESCE(Status,'')) IN ('checked_out','checked out')"
-)->fetchColumn();
+    // Done : ceux effectivement partis
+    $todayCheckoutDone = (int) query($pdo,
+        "SELECT COUNT(*) FROM reservation
+         WHERE DATE(checkOutDate) = CURDATE()
+           AND LOWER(COALESCE(status,'')) IN ('checked_out','checked out')"
+    )->fetchColumn();
 
-    // ── Occupation ────────────────────────────────────────
     $totalRooms = (int) query($pdo, 'SELECT COUNT(*) FROM room')->fetchColumn();
 
     $occupiedRooms = (int) query($pdo,
@@ -194,16 +255,16 @@ $todayCheckoutDone = (int) query($pdo,
         : 0;
 
     return [
-        'total_reservations'  => $totalReservations,
-        'total_revenue'       => $totalRevenue,
-        'total_customers'     => $totalCustomers,
-        'today_checkin_total' => $todayCheckinTotal,
-        'today_checkin_done'  => $todayCheckinDone,
-        'today_checkout_total'=> $todayCheckoutTotal,
-        'today_checkout_done' => $todayCheckoutDone,
-        'occupancy_rate'      => $occupancyRate,
-        'total_rooms'         => $totalRooms,
-        'occupied_rooms'      => $occupiedRooms,
+        'total_reservations'   => $totalReservations,
+        'total_revenue'        => $totalRevenue,
+        'total_customers'      => $totalCustomers,
+        'today_checkin_total'  => $todayCheckinTotal,
+        'today_checkin_done'   => $todayCheckinDone,
+        'today_checkout_total' => $todayCheckoutTotal,
+        'today_checkout_done'  => $todayCheckoutDone,
+        'occupancy_rate'       => $occupancyRate,
+        'total_rooms'          => $totalRooms,
+        'occupied_rooms'       => $occupiedRooms,
     ];
 }
 
@@ -225,7 +286,7 @@ function getRevenuePerMonth(PDO $pdo): array
         'SELECT DATE_FORMAT(checkInDate, \'%Y-%m\') AS month,
                 COALESCE(SUM(totalPrice), 0) AS revenue
          FROM reservation
-         WHERE NOT (' . isCancelledCondition('Status') . ')
+         WHERE NOT (' . isCancelledCondition('status') . ')
            AND checkInDate >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH)
            AND checkInDate <  DATE_ADD(CURDATE(), INTERVAL  1 MONTH)
          GROUP BY month
@@ -238,7 +299,7 @@ function getRoomOccupancy(PDO $pdo): array
     return query($pdo,
         'SELECT roomType, COUNT(*) AS count
          FROM reservation
-         WHERE NOT (' . isCancelledCondition('Status') . ')
+         WHERE NOT (' . isCancelledCondition('status') . ')
            AND roomType IS NOT NULL AND roomType <> \'\'
          GROUP BY roomType
          ORDER BY count DESC'
@@ -249,18 +310,13 @@ function getRecentReservations(PDO $pdo): array
 {
     return query($pdo,
         'SELECT id, clientName, roomType, roomNumber,
-                checkInDate, checkOutDate, totalPrice, Status AS status
+                checkInDate, checkOutDate, totalPrice, status
          FROM reservation
          ORDER BY id DESC
          LIMIT 8'
     )->fetchAll(PDO::FETCH_ASSOC);
 }
 
-/**
- * getRoomStatus — aliases alignés avec renderRoomStatus() dans dashboard_admin.js.
- * La colonne availability contient exactement 3 valeurs :
- *   'Disponible' | 'Occupé' | 'Maintenance'
- */
 function getRoomStatus(PDO $pdo): array
 {
     return query($pdo,
@@ -275,10 +331,6 @@ function getRoomStatus(PDO $pdo): array
          ORDER BY roomType ASC"
     )->fetchAll(PDO::FETCH_ASSOC);
 }
-
-// ─────────────────────────────────────────────────────────
-//  Réponse JSON
-// ─────────────────────────────────────────────────────────
 
 try {
     echo json_encode([

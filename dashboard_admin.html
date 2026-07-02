@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hotel Dashboard — KPIs</title>
+<title>Espace Admin — Royal Mansour Iberostar</title>
+<link rel="icon" type="image/png" href="images/logo.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="dashboard_admin.css">
@@ -84,7 +86,7 @@
         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
-      HôtelPro
+      Royal Mansour
     </div>
     <div class="sub">Management</div>
   </div>
@@ -111,7 +113,7 @@
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
         <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
       </svg>
-      Dashboard KPI
+      Statistiques
     </button>
     <button class="nav-item" id="nav-clients" onclick="showView('clients')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -146,13 +148,7 @@
     </button>
 
     <div class="nav-label">Rapports</div>
-    <button class="nav-item" id="nav-stats" onclick="showView('stats')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
-      </svg>
-      Statistiques
-    </button>
+
     <button class="nav-item" id="nav-historique" onclick="showView('historique')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <circle cx="12" cy="12" r="10"/>
@@ -863,6 +859,7 @@
               <option value="Annulé">❌ Annulé</option>
               <option value="Refusé">🚫 Refusé</option>
               <option value="Completé">🏁 Completé</option>
+              <option value="Supprimé">🗑️ Supprimé</option>
             </select>
           </div>
           <div class="res-filter-group">
@@ -892,9 +889,10 @@
       </div>
       <div class="hist-stats-row" id="histStatsRow">
         <div class="hist-stat-card"><div class="hsc-icon">🏁</div><div class="hsc-info"><span class="hsc-val" id="histStatCompleted">0</span><span class="hsc-lbl">Completées</span></div></div>
-        <div class="hist-stat-card"><div class="hsc-icon">❌</div><div class="hsc-info"><span class="hsc-val" id="histStatCancelled">0</span><span class="hsc-lbl">Annulées</span></div></div>
-        <div class="hist-stat-card"><div class="hsc-icon">🚫</div><div class="hsc-info"><span class="hsc-val" id="histStatRefused">0</span><span class="hsc-lbl">Refusées</span></div></div>
-        <div class="hist-stat-card"><div class="hsc-icon">💰</div><div class="hsc-info"><span class="hsc-val" id="histStatRevenue">0 TND</span><span class="hsc-lbl">Revenu total</span></div></div>
+<div class="hist-stat-card"><div class="hsc-icon">❌</div><div class="hsc-info"><span class="hsc-val" id="histStatCancelled">0</span><span class="hsc-lbl">Annulées</span></div></div>
+<div class="hist-stat-card"><div class="hsc-icon">🚫</div><div class="hsc-info"><span class="hsc-val" id="histStatRefused">0</span><span class="hsc-lbl">Refusées</span></div></div>
+<div class="hist-stat-card"><div class="hsc-icon">🗑️</div><div class="hsc-info"><span class="hsc-val" id="histStatDeleted">0</span><span class="hsc-lbl">Supprimées</span></div></div>
+<div class="hist-stat-card"><div class="hsc-icon">💰</div><div class="hsc-info"><span class="hsc-val" id="histStatRevenue">0 TND</span><span class="hsc-lbl">Revenu total</span></div></div>
       </div>
       <div class="res-table-card" id="histTableContainer">
         <div class="res-table-card-header">

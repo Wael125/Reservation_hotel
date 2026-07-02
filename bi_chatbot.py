@@ -61,20 +61,54 @@ TABLE reservation:
   roomType VARCHAR (simple/double/triple/suite),
   roomNumber VARCHAR,
   numberOfAdults INT, numberOfChildren INT, totalNumberOfPeople INT,
-  paymentDetails VARCHAR (carte_bancaire/especes/virement/cheque),
-  pension VARCHAR (sans_pension/demi_pension/pension_complete/tout_inclus),
+  paymentDetails VARCHAR (Carte bancaire/Espèces/Virement/PayPal),
+  pension VARCHAR (Sans pension/Demi-pension/Pension complète/All inclusive),
   totalPrice DECIMAL,
-  status VARCHAR (confirmed/cancelled/pending/checkedout)
+  status VARCHAR (En attente/Confirmée/Refusé/Annulé/Checked_in/Checked_out/Completé)
 
 TABLE room:
   roomnumber VARCHAR PK,
   roomType VARCHAR (simple/double/triple/suite),
   price DECIMAL,
-  availability VARCHAR (occupied/available)
+  availability VARCHAR (Disponible/Occupé/Maintenance)
+
+TABLE activites:
+  id_activite INT PK,
+  nom_activite VARCHAR,
+  description TEXT,
+  type_activite VARCHAR,
+  duree INT (durée en minutes),
+  capacite_max INT,
+  localisation VARCHAR,
+  statut VARCHAR (Disponible/Indisponible)
+
+TABLE avis:
+  id INT PK,
+  reservation_id INT → reservation.id,
+  customer_id INT → customer.id,
+  note INT (note de 1 à 5),
+  commentaire TEXT,
+  created_at DATETIME
+
+TABLE reclamations:
+  id INT PK,
+  reservation_id INT → reservation.id,
+  customer_id INT → customer.id,
+  avis_id INT → avis.id (nullable),
+  description TEXT,
+  type VARCHAR (Chambre/Salle de bain/Climatisation/Chauffage/Électricité/Wi-Fi/Télévision/Bruit/Propreté/Literie/Restauration/Petit-déjeuner/Room service/Piscine/Spa/Parking/Service réception/Service ménage/Service sécurité/Facturation/Remboursement/Autre),
+  statut VARCHAR (ouverte/en_cours/resolue),
+  created_at DATETIME,
+  urgence VARCHAR (Faible/Moyenne/élevée)       
 
 RELATIONS:
-  reservation.customer_id → customer.id
-  reservation.roomNumber  → room.roomnumber
+  reservation.customer_id  → customer.id
+  reservation.roomNumber   → room.roomnumber
+  avis.reservation_id      → reservation.id
+  avis.customer_id         → customer.id
+  reclamations.reservation_id → reservation.id
+  reclamations.customer_id    → customer.id
+  reclamations.avis_id        → avis.id
 
 PATTERNS UTILES:
 - Age client: TIMESTAMPDIFF(YEAR, c.date_naissance, CURDATE())
@@ -84,6 +118,10 @@ PATTERNS UTILES:
 - Mois+année spécifique: MONTH(col)=N AND YEAR(col)=YYYY
 - Derniers N mois: col >= DATE_SUB(CURDATE(), INTERVAL N MONTH)
 - Durée séjour: DATEDIFF(checkOutDate, checkInDate)
+- Note moyenne avis: AVG(a.note)
+- Réclamations urgentes: LOWER(r.urgence) IN ('haute','critique')
+- Réclamations ouvertes: LOWER(r.statut) IN ('ouverte','en_cours')
+- Activités disponibles: LOWER(a.statut) = 'active'
 """.format(today=datetime.now().strftime("%Y-%m-%d"))
 
 # ══════════════════════════════════════════════
@@ -128,6 +166,11 @@ EXEMPLES de requêtes correctes:
 - "réservations par mois" → SELECT DATE_FORMAT(checkInDate,'%Y-%m') AS label, COUNT(*) AS value FROM reservation GROUP BY label ORDER BY label
 - "top clients" → SELECT clientName AS label, COUNT(*) AS value FROM reservation GROUP BY clientName ORDER BY value DESC LIMIT 10
 - "taux occupation" → SELECT roomType AS label, ROUND(100*SUM(availability='occupied')/COUNT(*),1) AS value FROM room GROUP BY roomType
+- "note moyenne des avis" → SELECT DATE_FORMAT(a.created_at,'%Y-%m') AS label, ROUND(AVG(a.note),2) AS value FROM avis a GROUP BY label ORDER BY label
+- "réclamations par urgence" → SELECT urgence AS label, COUNT(*) AS value FROM reclamations GROUP BY urgence ORDER BY value DESC
+- "activités par type" → SELECT type_activite AS label, COUNT(*) AS value FROM activites GROUP BY type_activite ORDER BY value DESC
+- "réclamations par statut" → SELECT statut AS label, COUNT(*) AS value FROM reclamations GROUP BY statut ORDER BY value DESC
+- "clients ayant laissé un avis" → SELECT CONCAT(c.prenom,' ',c.nom) AS label, COUNT(a.id) AS value FROM avis a JOIN customer c ON a.customer_id=c.id GROUP BY c.id ORDER BY value DESC LIMIT 10
 """
 
 INSIGHT_SYSTEM_PROMPT = """
@@ -261,6 +304,11 @@ FALLBACK = """Je suis votre assistant BI. Exemples de questions :
 • Répartition des modes de paiement
 • Distribution des âges des clients
 • KPI généraux du tableau de bord
+• Note moyenne des avis clients par mois
+• Réclamations par niveau d'urgence
+• Activités disponibles par type
+• Réclamations ouvertes cette semaine
+• Clients ayant laissé un avis négatif (note ≤ 2)
 Posez votre question librement ! 🧠"""
 
 # ══════════════════════════════════════════════
@@ -384,6 +432,17 @@ def bi_intents():
             "Réservations annulées cette année",
             "Revenus par type de chambre",
             "KPI généraux",
+            # Nouvelles questions liées aux tables ajoutées
+            "Note moyenne des avis par mois",
+            "Répartition des avis par note",
+            "Réclamations par niveau d'urgence",
+            "Réclamations ouvertes en attente",
+            "Activités disponibles par type",
+            "Top clients ayant laissé des avis",
+            "Réclamations résolues vs ouvertes",
+            "Activités par localisation",
+            "Clients avec avis négatifs (note ≤ 2)",
+            "KPI avis et réclamations",
         ]
     })
 

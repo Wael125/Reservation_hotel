@@ -5,8 +5,6 @@ import requests
 import json
 import re
 
-from email_sender import send_confirmation_email
-
 app = Flask(__name__)
 app.secret_key = "hotel_secret_key"
 CORS(app)
@@ -14,7 +12,7 @@ CORS(app)
 conversations = {}
 
 API_BASE = "http://localhost/reservation_hotel"
-MODEL    = "gpt-oss:20b-cloud"
+MODEL    = "gemma4:31b-cloud"
 ML_URL   = "http://127.0.0.1:5001/detect_type"
 
 # ═══════════════════════════════════════════════════════════════
@@ -42,12 +40,10 @@ INFORMATIONS SUR L'ÉTABLISSEMENT
 - Check-in : à partir de 14h00 | Check-out : avant 12h00
 - Contact : royal.mansour@iberostar.tn | +216 73 681 100
 
-TYPES DE CHAMBRES ET TARIFS (par nuit, par chambre) :
-- Chambre Simple (1 adulte) : 120 €
-- Chambre Double (2 adultes) : 180 €
-- Chambre Triple (3 adultes ou 2 adultes + enfant) : 230 €
-- Suite Junior (jusqu'à 2 adultes) : 320 €
-- Suite Présidentielle (jusqu'à 4 personnes) : 550 €
+TYPES DE CHAMBRES, TARIFS ET CAPACITÉS MAXIMALES (par nuit, par chambre) :
+- Chambre Simple : 150 € — capacité max : 1 personne (adultes + enfants confondus)
+- Chambre Double : 250 € — capacité max : 2 personnes (adultes + enfants confondus)
+- Suite : 400 € — capacité max : 4 personnes (adultes + enfants confondus)
 
 FORMULES DE PENSION (supplément par personne/nuit) :
 - Sans pension (logement seul) : +0 €
@@ -160,7 +156,7 @@ UNE FOIS L'INTENTION CONFIRMÉE :
 
 Ordre de collecte :
   1. checkInDate, 2. checkOutDate, 3. roomType, 4. adults, 5. children,
-  6. pension, 7. paymentDetails, 8. clientName, 9. email, 10. phone
+  6. pension, 7. paymentDetails, 8. clientName, 9. email, 10. phone(un par un ne demande pas deux choses dans une seule demande )
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ÉTAPE RÉCAPITULATIF + MONTANT AVANT CONFIRMATION RÉSERVATION
@@ -170,6 +166,23 @@ Dès que les 10 champs sont collectés :
 2. Présente un récapitulatif complet + MONTANT TOTAL + acompte 30%.
 3. Demande confirmation explicite avant de valider.
 4. La réservation n'est confirmée que sur expression affirmative.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÈGLE DE VALIDATION — CAPACITÉ DES CHAMBRES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dès que roomType ET (adults ou children) sont connus, vérifie immédiatement :
+- total_occupants = adults + children (children = 0 si null)
+- Si total_occupants DÉPASSE la capacité max du roomType choisi :
+  1. NE valide PAS ces champs (remets adults et children à null, ou roomType à null
+     selon ce qui semble le plus naturel dans le contexte).
+  2. Informe poliment le client que le type de chambre choisi ne peut pas accueillir
+     ce nombre de personnes, indique la capacité maximale réelle, et propose soit
+     de réduire le nombre d'occupants, soit de choisir un type de chambre adapté.
+  3. Continue normalement la collecte une fois la cohérence rétablie.
+- Cette vérification s'applique à chaque mise à jour de roomType, adults ou children,
+  y compris si le client modifie un de ces champs après les avoir déjà fournis.
+- ready_to_check et ready_to_confirm ne doivent JAMAIS être true si total_occupants
+  dépasse la capacité du roomType sélectionné.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FORMAT DE RÉPONSE — OBLIGATOIRE
@@ -185,11 +198,11 @@ Structure JSON :
   "data": {
     "checkInDate": "YYYY-MM-DD ou null",
     "checkOutDate": "YYYY-MM-DD ou null",
-    "roomType": "simple | double | triple | suite_junior | suite_presidentielle | null",
+    "roomType": "simple | double | suite | null",
     "adults": entier ou null,
     "children": entier ou null,
-    "pension": "Sans pension | Petit-déjeuner | Demi-pension | Pension complète | All inclusive | null",
-    "paymentDetails": "Carte bancaire | Virement bancaire | Espèces | null",
+    "pension": "Sans pension | Petit-déjeuner | Demi-pension | Pension complète | All inclusive",
+    "paymentDetails": "Carte bancaire | Virement bancaire | Espèces",
     "clientName": "string ou null",
     "email": "string ou null",
     "phone": "string ou null"
@@ -723,28 +736,24 @@ def chat():
         print(f"[RESERVATION RESULT] {res}")
 
         if res.get("status") == "success":
-            ref = res.get("reservation_id", res.get("id", "N/A"))
+            ref        = res.get("reservation_id", res.get("id", "N/A"))
+            email_sent = res.get("email_sent", False)
+            email_err  = res.get("email_error", "")
 
-            email_res = send_confirmation_email(
-                data=sess["data"],
-                room=sess["room"],
-                reservation_id=ref
-            )
-
-            if email_res.get("success"):
+            if email_sent:
                 system_msg = (
                     f"[SYSTÈME] Réservation #{ref} confirmée avec succès. "
-                    f"Email envoyé à {sess['data']['email']}. "
+                    f"Email de confirmation envoyé à {sess['data']['email']}. "
                     f"Annonce la confirmation et la référence #{ref} à l'utilisateur."
                 )
             else:
                 system_msg = (
-                    f"[SYSTÈME] Réservation #{ref} confirmée. "
-                    f"Email non envoyé ({email_res.get('error', '?')}). "
+                    f"[SYSTÈME] Réservation #{ref} confirmée avec succès. "
+                    f"Email non envoyé ({email_err or 'erreur SMTP'}). "
                     f"Confirme la réservation avec la référence #{ref} "
                     f"et dis à l'utilisateur de contacter la réception pour son reçu."
                 )
-                print(f"[EMAIL] ⚠️  Échec : {email_res.get('error')}")
+                print(f"[EMAIL] ⚠️  Échec : {email_err}")
 
             sess["history"].append({"role": "user",      "content": message})
             sess["history"].append({"role": "assistant", "content": reply})

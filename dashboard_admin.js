@@ -1,18 +1,12 @@
 /* ═══════════════════════════════════════════════════════════
    HOTEL DASHBOARD — dashboard_admin.js
    Navigation + KPI + Modal Admin + Chatbot
-   Réservations → gestion_reservation.js
-   Clients      → gestion_clients.js
-   Chambres     → gestion_chambres.js
-   Historique   → gestion_historique.js
-   Transitions  → gestion_transitions.js
+   Cloche/Notifications → gestion_transitions.js (initTransitionsPanel)
 ═══════════════════════════════════════════════════════════ */
 
-// ── LOGIN_ID ──────────────────────────────────────────────
 var LOGIN_ID = window.LOGIN_ID ?? null;
 console.log('✅ Admin Dashboard — login_id:', LOGIN_ID, '(type:', typeof LOGIN_ID, ')');
 
-// ── Résolution URL API ────────────────────────────────────
 const _port = window.location.port;
 const _isLiveServer = _port === '3000' || _port === '5500' || _port === '5501';
 
@@ -28,7 +22,7 @@ const _loginLink = document.getElementById('loginLink');
 if (_loginLink) _loginLink.href = LOGIN_URL;
 
 // ══════════════════════════════════════════════════════════
-//  NAVIGATION — showView()
+//  NAVIGATION
 // ══════════════════════════════════════════════════════════
 
 const VIEW_META = {
@@ -39,6 +33,7 @@ const VIEW_META = {
   stats:        { title: 'Statistiques',             breadcrumb: 'Rapports & analyses'                   },
   historique:   { title: 'Historique',               breadcrumb: 'Réservations terminées · Lecture seule'},
   predictions:  { title: 'Prédictions ML',           breadcrumb: 'Analyse des tendances et prévisions'   },
+  reclamations: { title: 'Réclamations',             breadcrumb: 'Gestion des réclamations clients'      },
 };
 
 function showView(viewName) {
@@ -57,7 +52,7 @@ function showView(viewName) {
   if (titleEl) titleEl.textContent = meta.title      || viewName;
   if (breadEl) breadEl.textContent = meta.breadcrumb || '';
 
-if (viewName === 'reservations') { loadReservations(); _transPoll(); }
+  if (viewName === 'reservations') { loadReservations(); _transPoll(); }
   if (viewName === 'clients')      fetchClients();
   if (viewName === 'chambres')     fetchChambres();
   if (viewName === 'historique')   loadHistorique();
@@ -132,14 +127,13 @@ function normalizeStatus(s) {
 
 function getStatusMeta(status) {
   const k = normalizeStatus(status);
-  if (k === 'confirmee')                                                                         return { className: 'confirmée',   label: 'Confirmée'   };
-  if (k === 'en attente' || k === 'pending')                                                    return { className: 'pending',     label: 'En attente'  };
-  if (k === 'annule' || k === 'annulee' || k === 'cancelled' || k === 'canceled' || k === 'annulé')
-                                                                                                 return { className: 'cancelled',   label: 'Annulé'      };
-  if (k === 'refuse' || k === 'refusé')                                                         return { className: 'refused',     label: 'Refusé'      };
-  if (k === 'checked_out' || k === 'checked out')                                               return { className: 'checked_out', label: 'Checked out' };
-  if (k === 'checked_in'  || k === 'checked in')                                                return { className: 'checked_in',  label: 'Checked in'  };
-  if (k === 'complete' || k === 'completé' || k === 'completed')                                return { className: 'completed',   label: 'Completé'    };
+  if (k === 'confirmee')                                                                              return { className: 'confirmée',   label: 'Confirmée'   };
+  if (k === 'en attente' || k === 'pending')                                                         return { className: 'pending',     label: 'En attente'  };
+  if (k === 'annule' || k === 'annulee' || k === 'cancelled' || k === 'canceled' || k === 'annulé') return { className: 'cancelled',   label: 'Annulé'      };
+  if (k === 'refuse' || k === 'refusé')                                                              return { className: 'refused',     label: 'Refusé'      };
+  if (k === 'checked_out' || k === 'checked out')                                                    return { className: 'checked_out', label: 'Checked out' };
+  if (k === 'checked_in'  || k === 'checked in')                                                     return { className: 'checked_in',  label: 'Checked in'  };
+  if (k === 'complete' || k === 'completé' || k === 'completed')                                     return { className: 'completed',   label: 'Completé'    };
   return { className: k.replace(/\s+/g, '_'), label: status || '-' };
 }
 
@@ -350,16 +344,6 @@ function renderTable(rows = []) {
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════════
-//  ROOM STATUS  (widget "Occupation par type")
-//
-//  Le PHP retourne maintenant ces champs par ligne :
-//    roomType | total | disponible | occupied | maintenance
-//
-//  renderRoomStatus() affiche une barre de progression par type,
-//  colorée selon le taux d'occupation réel.
-// ══════════════════════════════════════════════════════════
-
 function renderRoomStatus(rows = []) {
   const list = document.getElementById('roomStatusList');
   if (!list) return;
@@ -372,17 +356,14 @@ function renderRoomStatus(rows = []) {
   const barColors = [C.gold, C.teal, C.rose, C.violet, C.green];
 
   list.innerHTML = rows.map((row, i) => {
-    // ── Lecture des champs avec fallback 0 ──────────────────────
     const total       = parseInt(row.total,       10) || 0;
-    const occupied    = parseInt(row.occupied,    10) || 0;  // ← alias SQL corrigé
+    const occupied    = parseInt(row.occupied,    10) || 0;
     const maintenance = parseInt(row.maintenance, 10) || 0;
     const disponible  = parseInt(row.disponible,  10) || 0;
 
-    // Taux basé sur les chambres occupées / total
     const pct   = total > 0 ? Math.round((occupied / total) * 100) : 0;
     const color = barColors[i % barColors.length];
 
-    // Ligne de détail : adapte selon ce qu'on a
     let detail = `${occupied} occupée${occupied > 1 ? 's' : ''} / ${total} total`;
     if (maintenance > 0) detail += ` · ${maintenance} maintenance`;
     if (disponible  > 0) detail += ` · ${disponible} libre${disponible > 1 ? 's' : ''}`;
@@ -405,7 +386,6 @@ function renderRoomStatus(rows = []) {
       </div>`;
   }).join('');
 
-  // Animation des barres après insertion dans le DOM
   setTimeout(() => {
     list.querySelectorAll('.room-bar-fill')
       .forEach(el => { el.style.width = `${el.dataset.pct}%`; });
@@ -587,122 +567,6 @@ async function send() {
 }
 
 // ══════════════════════════════════════════════════════════
-//  NOTIFICATIONS
-// ══════════════════════════════════════════════════════════
-
-let notificationsData = { reclamations: [], clients: [], reservations: [] };
-let lastNotificationTime = new Date().toISOString();
-
-function getTimeAgo(dateStr) {
-  if (!dateStr) return 'Il y a peu';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  
-  if (diffMins < 1) return 'À l\'instant';
-  if (diffMins < 60) return `Il y a ${diffMins}m`;
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  return `Il y a ${diffDays}j`;
-}
-
-async function loadNotifications() {
-  try {
-    const res = await fetch('dashboard_admin.php?action=notifications', { credentials: 'include', cache: 'no-store' });
-    if (!res.ok) return;
-    
-    const data = await res.json();
-    notificationsData = data;
-    updateNotificationBell();
-  } catch (err) {
-    console.error('[Notifications]', err);
-  }
-}
-
-function updateNotificationBell() {
-  const totalNotifs = (notificationsData.reclamations?.length || 0) +
-                      (notificationsData.clients?.length || 0) +
-                      (notificationsData.reservations?.length || 0);
-  
-  const badge = document.getElementById('notificationBadge');
-  if (badge) {
-    if (totalNotifs > 0) {
-      badge.textContent = totalNotifs > 99 ? '99+' : totalNotifs;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
-  
-  renderNotificationList();
-}
-
-function renderNotificationList() {
-  const list = document.getElementById('notificationList');
-  if (!list) return;
-  
-  const items = [];
-  
-  // Réclamations
-  (notificationsData.reclamations || []).forEach(rec => {
-    items.push({
-      type: 'reclamation',
-      title: `Réclamation #${rec.id}`,
-      text: `${rec.clientName || 'Client'} - Priorité: ${rec.priorite}`,
-      time: rec.created_at,
-      timestamp: new Date(rec.created_at).getTime(),
-    });
-  });
-  
-  // Clients
-  (notificationsData.clients || []).forEach(client => {
-    items.push({
-      type: 'client',
-      title: `Nouveau client`,
-      text: `${client.firstName} ${client.lastName}`,
-      time: client.created_at,
-      timestamp: new Date(client.created_at).getTime(),
-    });
-  });
-  
-  // Réservations
-  (notificationsData.reservations || []).forEach(res => {
-    items.push({
-      type: 'reservation',
-      title: `Réservation #${res.id}`,
-      text: `${res.clientName} - ${res.roomType}`,
-      time: res.createdAt,
-      timestamp: new Date(res.createdAt).getTime(),
-    });
-  });
-  
-  // Trier par date décroissante
-  items.sort((a, b) => b.timestamp - a.timestamp);
-  
-  if (!items.length) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.82rem">Aucune notification</div>';
-    return;
-  }
-  
-  list.innerHTML = items.map(item => `
-    <div class="notification-item new">
-      <div class="notification-item-type ${item.type}">${item.type === 'reclamation' ? '⚠️ Réclamation' : item.type === 'client' ? '👤 Client' : '📅 Réservation'}</div>
-      <div class="notification-item-text"><strong>${item.title}</strong></div>
-      <div class="notification-item-text">${item.text}</div>
-      <div class="notification-item-time">${getTimeAgo(item.time)}</div>
-    </div>
-  `).join('');
-}
-
-function toggleNotificationDropdown() {
-  const dropdown = document.getElementById('notificationDropdown');
-  if (!dropdown) return;
-  dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-}
-
-// ══════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════
 
@@ -723,25 +587,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.key === 'Enter') send();
   });
 
-  document.getElementById('btnNotificationBell')?.addEventListener('click', toggleNotificationDropdown);
-  
-  // Fermer le dropdown quand on clique ailleurs
-  document.addEventListener('click', function(e) {
-    const bell = document.getElementById('btnNotificationBell');
-    const dropdown = document.getElementById('notificationDropdown');
-    if (!bell?.contains(e.target) && !dropdown?.contains(e.target)) {
-      if (dropdown) dropdown.style.display = 'none';
-    }
-  });
-
   initClientsView();
   initReservationsView();
   initChambresView();
   initHistoriqueView();
-  initTransitionsPanel();
+  initTransitionsPanel(); // ← cloche unifiée (gestion_transitions.js)
 
   loadDashboard();
-  loadNotifications();
-  setInterval(loadDashboard, 60_000);
-  setInterval(loadNotifications, 30_000);
 });

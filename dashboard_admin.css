@@ -484,3 +484,48 @@ body {
   .content { padding: 16px; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Notification groups & items ──────────────────────── */
+.notif-group-label {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--text-muted);
+    padding: 10px 14px 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+}
+.notif-group-label:first-child { border-top: none; margin-top: 0; }
+
+.notif-category-lbl {
+    font-size: .68rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.notif-title {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text-primary, #eceef2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-sub {
+    font-size: .72rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-time {
+    font-size: .65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.notif-urgent { background: rgba(248, 113, 113, .06); }

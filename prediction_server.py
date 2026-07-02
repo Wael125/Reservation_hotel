@@ -1,37 +1,3 @@
-"""
-prediction_server.py — Serveur ML Prédiction Réservations Hôtel
-Port : 5002
-
-VERSION 7.0 — Correction fondamentale : prédictions ancrées sur les niveaux réels
-
-PROBLÈME v6 :
-  Prophet prédit 292 pour juillet 2026 alors que juillet 2024 = ~410, juillet 2025 = ~420.
-  Cause : Prophet voit une tendance baissière globale (fin 2025 creux) et l'applique à 2026.
-  Résultat : pic été 2026 prédit à 70% du vrai niveau → complètement faux.
-
-SOLUTION v7 :
-  ✅ ANCRAGE SAISONNIER ABSOLU : pour chaque mois prédit, on calcule la moyenne
-     réelle de ce mois sur les années passées (ex: juillet moyen = 415), et on
-     s'assure que la prédiction ne descend jamais en dessous de 80% de cette moyenne.
-
-  ✅ FLAT TREND FORCÉ : on neutralise la tendance longue de Prophet (qui est fausse)
-     en recentrant la série d'entraînement sur une moyenne normalisée. Prophet
-     capte alors la FORME saisonnière sans être pollué par la "tendance" baissière
-     artificielle des mois creux récents.
-
-  ✅ DÉCOMPOSITION MANUELLE SAISONNIÈRE : si Prophet échoue ou sous-estime,
-     on construit la prédiction directement depuis le profil mensuel réel :
-     prédiction(mois M, année A) = moyenne_historique(mois M) × trend_factor(A)
-     C'est simple, transparent, et parfaitement ancré sur la réalité.
-
-  ✅ CUTOFF ÉTENDU À 4 MOIS : on retire encore plus de mois incomplets pour
-     que Prophet ne soit exposé qu'aux données stables et complètes.
-
-  ✅ VALIDATION STRICTE POST-PROPHET : si la prédiction s'écarte de >40% de la
-     moyenne saisonnière attendue, on bascule automatiquement sur la décomposition
-     manuelle qui est toujours cohérente.
-"""
-
 import os
 import json
 import warnings
@@ -62,19 +28,15 @@ DB_CONFIG: dict = {
 CACHE_TTL_SECONDS = 3600
 MIN_ROWS_PROPHET  = 10
 MIN_ROWS_ARIMA    = 5
-MAX_HORIZON       = 12
+MAX_HORIZON       = 24   # on monte à 24 pour supporter ?horizon=24
 
-# Exclure 4 mois : mois courant (mai incomplet) + 3 mois précédents
-# → Prophet s'entraîne sur données jusqu'à fin janvier 2026 (stable)
-TRAINING_CUTOFF_MONTHS = 4
+# Exclure 4 mois : mois courant (incomplet) + 3 mois précédents
+TRAINING_CUTOFF_MONTHS = 1
 
 EXCLUDED_STATUSES = (
-    "cancelled", "canceled", "annulé", "annullee", "annulee", "annulé",
-    "annulation", "cancel",
-    "rejected", "refusé", "refusee", "refused", "refus", "refuse",
-    "no_show", "no-show", "noshow",
-    "expired", "expiré",
-    "pending",
+    "Annulé",
+    "Refusé",
+    "Supprimé",
 )
 
 app = Flask(__name__)
@@ -123,11 +85,10 @@ def _history_start_date() -> str:
 
 def _training_cutoff_date() -> str:
     """
-    On exclut TRAINING_CUTOFF_MONTHS mois depuis le mois courant.
-    En mai 2026 avec cutoff=4 : fin janvier 2026.
-    Prophet voit 2024 et 2025 complets → profil saisonnier parfait.
+    Exclut TRAINING_CUTOFF_MONTHS mois depuis le mois courant.
+    En juin 2026 avec cutoff=4 → fin février 2026.
     """
-    now = datetime.now()
+    now   = datetime.now()
     month = now.month - TRAINING_CUTOFF_MONTHS
     year  = now.year
     while month <= 0:
@@ -137,9 +98,9 @@ def _training_cutoff_date() -> str:
     return cutoff.strftime("%Y-%m-%d")
 
 
-def _prediction_end_date() -> str:
+def _prediction_end_date(horizon: int = MAX_HORIZON) -> str:
     now   = datetime.now()
-    month = now.month + MAX_HORIZON
+    month = now.month + horizon
     year  = now.year + (month - 1) // 12
     month = ((month - 1) % 12) + 1
     return datetime(year, month, 1).strftime("%Y-%m-%d")
@@ -213,18 +174,14 @@ def check_aberrant_dates() -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PROFIL SAISONNIER RÉEL — cœur de la correction
+#  PROFIL SAISONNIER RÉEL
 # ══════════════════════════════════════════════════════════════════════════════
 
 def compute_monthly_averages(df: pd.DataFrame) -> dict:
     """
-    Calcule la moyenne ABSOLUE de réservations par mois calendaire
-    sur les années complètes uniquement.
-
-    Retourne {1: 180.5, 2: 165.0, ..., 7: 415.2, 8: 420.0, ...}
-
-    C'est la référence absolue qu'on utilisera pour ancrer les prédictions.
-    Les étés précédents = 400+ seront correctement représentés.
+    Moyenne ABSOLUE de réservations par mois calendaire
+    calculée sur les années complètes uniquement.
+    Retourne {1: 180.5, 2: 165.0, ..., 7: 415.2, ...}
     """
     if df.empty:
         return {}
@@ -234,7 +191,6 @@ def compute_monthly_averages(df: pd.DataFrame) -> dict:
     df["month"] = df["ds"].dt.month
     current_year = datetime.now().year
 
-    # Années avec >= 10 mois de données et pas l'année courante
     months_per_year = df.groupby("year")["month"].count()
     complete_years  = months_per_year[
         (months_per_year >= 10) & (months_per_year.index < current_year)
@@ -242,13 +198,11 @@ def compute_monthly_averages(df: pd.DataFrame) -> dict:
 
     if not complete_years:
         complete_years = months_per_year[months_per_year.index < current_year].index.tolist()
-
     if not complete_years:
-        # Dernier recours : toutes les années
         complete_years = months_per_year.index.tolist()
 
-    df_complete = df[df["year"].isin(complete_years)].copy()
-    monthly_abs = df_complete.groupby("month")["y"].mean().to_dict()
+    df_complete  = df[df["year"].isin(complete_years)].copy()
+    monthly_abs  = df_complete.groupby("month")["y"].mean().to_dict()
 
     print(f"[Moyennes mensuelles] Calculé sur années {complete_years}")
     for m in sorted(monthly_abs.keys()):
@@ -258,10 +212,6 @@ def compute_monthly_averages(df: pd.DataFrame) -> dict:
 
 
 def compute_seasonal_profile(monthly_averages: dict) -> dict:
-    """
-    Normalise les moyennes absolues en facteurs relatifs (ratio / moyenne globale).
-    {1: 0.72, ..., 7: 1.65, 8: 1.68, ...}
-    """
     if not monthly_averages:
         return {
             1: 0.70, 2: 0.75, 3: 0.90, 4: 1.00, 5: 1.10,
@@ -281,7 +231,7 @@ def compute_seasonal_profile(monthly_averages: dict) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MODÈLE DÉCOMPOSITION MANUELLE — toujours cohérent avec l'historique
+#  MODÈLE DÉCOMPOSITION MANUELLE
 # ══════════════════════════════════════════════════════════════════════════════
 
 def seasonal_decomposition_predict(
@@ -290,21 +240,6 @@ def seasonal_decomposition_predict(
     monthly_averages: dict,
     df_future: pd.DataFrame = None,
 ) -> dict:
-    """
-    Prédiction par décomposition saisonnière pure :
-      prediction(mois M, année A) = monthly_avg(M) × trend_factor(A)
-
-    trend_factor est calculé sur la tendance des ANNÉES COMPLÈTES uniquement
-    (pas sur les mois incomplets récents).
-
-    Exemple :
-      - juillet 2024 réel = 410, juillet 2025 réel = 420
-      - monthly_avg(juillet) = 415
-      - trend_factor(2026) ≈ 1.0 (stable) ou légèrement positif
-      - prédiction juillet 2026 = 415 × 1.0 = 415
-
-    C'est la méthode la plus simple et la plus fiable quand Prophet dévie.
-    """
     if not monthly_averages:
         return naive_predict_seasonal(df, horizon)
 
@@ -313,13 +248,11 @@ def seasonal_decomposition_predict(
     df["month"] = df["ds"].dt.month
     current_year = datetime.now().year
 
-    # Tendance annuelle sur années complètes
     months_per_year = df.groupby("year")["month"].count()
     complete_years  = sorted(months_per_year[
         (months_per_year >= 10) & (months_per_year.index < current_year)
     ].index.tolist())
 
-    # Calculer la moyenne annuelle pour chaque année complète
     if len(complete_years) >= 2:
         annual_avgs = {}
         for yr in complete_years:
@@ -330,19 +263,14 @@ def seasonal_decomposition_predict(
         avgs_arr  = np.array([annual_avgs[y] for y in years_arr], dtype=float)
         slope, intercept = np.polyfit(years_arr, avgs_arr, 1)
 
-        # Limiter la pente : on refuse une baisse > 5% par an
-        # (évite que 2 mois de creux en 2025 donnent une tendance catastrophiste)
         mean_avg = float(avgs_arr.mean())
-        max_decline_per_year = mean_avg * 0.05  # 5% max de déclin par an
+        max_decline_per_year = mean_avg * 0.05
         slope = max(slope, -max_decline_per_year)
 
         print(f"[Décomposition] Tendance annuelle : {slope:+.1f} rés./an "
               f"(sur années {complete_years})")
-        print(f"[Décomposition] Années complètes moyennes : "
-              + ", ".join(f"{y}: {annual_avgs[y]:.0f}" for y in sorted(annual_avgs)))
 
         def trend_factor(year: int) -> float:
-            ref_year = float(complete_years[-1])  # dernière année complète
             base_avg = annual_avgs[complete_years[-1]]
             if base_avg == 0:
                 return 1.0
@@ -352,7 +280,6 @@ def seasonal_decomposition_predict(
         def trend_factor(year: int) -> float:
             return 1.0
 
-    # Générer les prédictions
     now = datetime.now()
     future_dates = []
     m, y = now.month, now.year
@@ -362,11 +289,8 @@ def seasonal_decomposition_predict(
             m = 1
             y += 1
         future_dates.append(pd.Timestamp(y, m, 1))
-
-    # Limiter à horizon mois
     future_dates = future_dates[:horizon]
 
-    # Map des futures confirmées pour correction
     future_map = {}
     if df_future is not None and not df_future.empty:
         future_map = dict(zip(
@@ -376,28 +300,24 @@ def seasonal_decomposition_predict(
 
     values, lower, upper = [], [], []
     for dt in future_dates:
-        m     = dt.month
-        yr    = dt.year
-        base  = monthly_averages.get(m, float(df["y"].mean()))
-        tf    = trend_factor(yr)
-        pred  = round(base * tf, 1)
+        m    = dt.month
+        yr   = dt.year
+        base = monthly_averages.get(m, float(df["y"].mean()))
+        tf   = trend_factor(yr)
+        pred = round(base * tf, 1)
 
-        # Correction avec confirmées : prendre le max
         period_key = dt.to_period("M")
         if period_key in future_map:
             confirmed = future_map[period_key]
-            if confirmed > pred * 0.6:  # confirmé crédible (>60% du prédit)
+            if confirmed > pred * 0.6:
                 pred = round(max(pred, confirmed), 1)
 
-        # Intervalle de confiance : ±15% pour la décomposition simple
         low  = round(pred * 0.85, 1)
         high = round(pred * 1.15, 1)
-
         values.append(pred)
         lower.append(low)
         upper.append(high)
 
-    # Peaks
     avg_pred  = np.mean(values)
     threshold = avg_pred * 1.2
     peaks = [
@@ -440,18 +360,8 @@ def validate_prophet_predictions(
     monthly_averages: dict,
     tolerance: float = 0.50,
 ) -> bool:
-    """
-    Vérifie que les prédictions Prophet sont cohérentes avec l'historique.
-
-    Pour chaque mois prédit :
-      - Si prédit < (moyenne_historique_mois × (1 - tolerance)) → INVALIDE
-      - Si prédit > (moyenne_historique_mois × (1 + tolerance × 2)) → INVALIDE
-
-    tolerance = 0.50 → on accepte ±50% autour de la moyenne historique mensuelle.
-    Si trop de mois sont invalides → on bascule sur SeasonalDecomp.
-    """
     if not monthly_averages or not result.get("values"):
-        return True  # pas de référence → on garde Prophet
+        return True
 
     labels = result["labels"]
     values = result["values"]
@@ -470,7 +380,7 @@ def validate_prophet_predictions(
             invalid_count += 1
 
     invalid_ratio = invalid_count / len(values) if values else 0
-    is_valid = invalid_ratio <= 0.30  # accepté si <= 30% de mois invalides
+    is_valid = invalid_ratio <= 0.30
 
     if not is_valid:
         print(f"[Validation Prophet] {invalid_count}/{len(values)} mois invalides "
@@ -486,16 +396,6 @@ def apply_hard_floor(
     monthly_averages: dict,
     floor_factor: float = 0.70,
 ) -> dict:
-    """
-    Correction finale : plancher absolu par mois basé sur la moyenne historique.
-
-    Si Prophet a prédit 292 pour juillet alors que juillet moyen = 415 :
-      floor = 415 × 0.70 = 290.5 → Prophet est déjà juste sous le floor
-      On remonte à 290.5 et on ajuste les intervalles.
-
-    Avec floor_factor = 0.70 : la prédiction ne peut jamais être < 70% de la
-    moyenne historique réelle de ce mois. C'est conservateur mais réaliste.
-    """
     if not monthly_averages:
         return result
 
@@ -508,8 +408,8 @@ def apply_hard_floor(
 
     corrections = 0
     for i, (label, val) in enumerate(zip(labels, values)):
-        month     = datetime.strptime(label[:7], "%Y-%m").month
-        expected  = monthly_averages.get(month, global_avg)
+        month      = datetime.strptime(label[:7], "%Y-%m").month
+        expected   = monthly_averages.get(month, global_avg)
         hard_floor = expected * floor_factor
 
         if val < hard_floor:
@@ -526,7 +426,6 @@ def apply_hard_floor(
 
     if corrections > 0:
         print(f"[Hard Floor] {corrections} mois corrigés par le plancher saisonnier")
-        # Recalculer tendance et peaks après correction
         result["trend"] = compute_trend(values)
         avg_pred  = np.mean(values)
         threshold = avg_pred * 1.2
@@ -579,7 +478,7 @@ def get_monthly_series(cutoff_date: str = None) -> pd.DataFrame:
         for r in rows
     ]
     df = pd.DataFrame(records).sort_values("ds").reset_index(drop=True)
-    print(f"[Historique] {len(df)} mois — de {df['ds'].min().date()} à {df['ds'].max().date()}")
+    print(f"[Historique mensuel] {len(df)} mois — de {df['ds'].min().date()} à {df['ds'].max().date()}")
     return df
 
 
@@ -641,7 +540,9 @@ def get_weekly_series() -> pd.DataFrame:
         return pd.DataFrame(columns=["ds", "y", "revenue"])
     records = [{"ds": pd.Timestamp(r["ds_raw"]), "y": float(r["y"]),
                 "revenue": float(r["revenue"] or 0)} for r in rows]
-    return pd.DataFrame(records).sort_values("ds").reset_index(drop=True)
+    df = pd.DataFrame(records).sort_values("ds").reset_index(drop=True)
+    print(f"[Historique hebdo] {len(df)} semaines — de {df['ds'].min().date()} à {df['ds'].max().date()}")
+    return df
 
 
 def get_daily_series() -> pd.DataFrame:
@@ -667,6 +568,7 @@ def get_daily_series() -> pd.DataFrame:
         full_range = pd.date_range(df["ds"].min(), df["ds"].max(), freq="D")
         df = df.set_index("ds").reindex(full_range, fill_value=0).reset_index()
         df.rename(columns={"index": "ds"}, inplace=True)
+    print(f"[Historique daily] {len(df)} jours — de {df['ds'].min().date()} à {df['ds'].max().date()}")
     return df
 
 
@@ -679,11 +581,6 @@ def build_hybrid_training_series(
     df_future: pd.DataFrame,
     monthly_averages: dict,
 ) -> pd.DataFrame:
-    """
-    Injecte les mois futurs confirmés dans la série d'entraînement,
-    uniquement si leur volume est crédible (>= 40% de la moyenne historique
-    du même mois calendaire).
-    """
     if df_past.empty or df_future.empty:
         return df_past
 
@@ -703,8 +600,8 @@ def build_hybrid_training_series(
     if not credible:
         return df_past
 
-    df_future_ok = pd.DataFrame(credible)
-    existing_ds  = set(df_past["ds"].dt.to_period("M"))
+    df_future_ok  = pd.DataFrame(credible)
+    existing_ds   = set(df_past["ds"].dt.to_period("M"))
     df_future_new = df_future_ok[
         ~df_future_ok["ds"].dt.to_period("M").isin(existing_ds)
     ].copy()
@@ -727,9 +624,9 @@ def build_hybrid_training_series(
 #  SÉRIE RÉALISATIONS (graphique)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def get_realization_series(period: str) -> dict:
+def get_realization_series(period: str, horizon: int = MAX_HORIZON) -> dict:
     history_start = _history_start_date()
-    end_date      = _prediction_end_date()
+    end_date      = _prediction_end_date(horizon)
 
     if period == "monthly":
         conn  = _connect()
@@ -813,7 +710,7 @@ def get_realization_series(period: str) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_confirmed_future_reservations(horizon_months: int) -> dict:
-    end_date = _prediction_end_date()
+    end_date = _prediction_end_date(horizon_months)
     conn     = _connect()
     query    = f"""
         SELECT DATE_FORMAT(checkInDate, '%Y-%m') AS month_key,
@@ -1036,14 +933,15 @@ def naive_predict_seasonal(df: pd.DataFrame, horizon: int) -> dict:
         "metrics": {"mae": None, "rmse": None, "mape": None},
         "peaks": [], "trend": compute_trend(values), "horizon": horizon,
         "freq": "MS", "trained_on": len(df), "trained_on_hybrid": len(df),
-        "cap": round(max(values)*1.5, 1), "floor": round(min(values)*0.5, 1),
+        "cap": round(max(values)*1.5, 1) if values else 1.0,
+        "floor": round(min(values)*0.5, 1) if values else 0.0,
         "history_days": 0, "seasonality_mode": "naive",
         "training_cutoff": _training_cutoff_date(), "future_injected": 0,
     }
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MODÈLE PROPHET — VERSION 7.0
+#  MODÈLE PROPHET — VERSION 7.1
 # ══════════════════════════════════════════════════════════════════════════════
 
 def prophet_predict(
@@ -1053,16 +951,15 @@ def prophet_predict(
     history_start: str = None,
     df_future: pd.DataFrame = None,
     monthly_averages: dict = None,
+    last_hist_override: pd.Timestamp = None,   # ← NOUVEAU v7.1
 ) -> dict:
     """
-    Prophet v7 — ancrages multiples pour prédictions réalistes :
+    Prophet v7.1 — last_hist_override permet de forcer le point de départ
+    des prédictions pour daily/weekly (sinon Prophet prédit dans le passé).
 
-    1. Série hybride avec seuil crédibilité 40% par mois calendaire
-    2. changepoint_prior_scale = 0.01 (neutralise quasi-totalement la tendance)
-    3. seasonality_prior_scale = 20 (très forte saisonnalité)
-    4. changepoint_range = 0.70 (ignore les 30% finaux de la série)
-    5. Hard floor post-prediction : 70% de la moyenne historique par mois
-    6. Validation : si trop de mois invalides → SeasonalDecomp automatique
+    Pour monthly  : last_hist_override = None → calculé depuis df["ds"].max()
+    Pour weekly   : last_hist_override = cutoff_weekly (il y a ~4 semaines)
+    Pour daily    : last_hist_override = cutoff_daily  (il y a ~30 jours)
     """
     try:
         from prophet import Prophet
@@ -1071,7 +968,7 @@ def prophet_predict(
 
     monthly_averages = monthly_averages or {}
 
-    # ── 1. Série hybride ─────────────────────────────────────────────────────
+    # ── 1. Série hybride (mensuel seulement) ─────────────────────────────────
     if df_future is not None and not df_future.empty and monthly_averages:
         df_train = build_hybrid_training_series(df, df_future, monthly_averages)
     else:
@@ -1087,7 +984,7 @@ def prophet_predict(
     hist_p05  = float(df_fit["y"].quantile(0.05))
 
     cap_val   = max(hist_max * 1.5, hist_mean + 3 * hist_std, 1.0)
-    floor_val = max(0.0, hist_p05 * 0.3)  # floor global très bas, le hard floor fera le travail
+    floor_val = max(0.0, hist_p05 * 0.3)
 
     df_fit["cap"]   = cap_val
     df_fit["floor"] = floor_val
@@ -1111,14 +1008,10 @@ def prophet_predict(
         n_changepoints = min(6, max(1, n // 5))
         fourier_order  = 10
 
-    # ── CLÉ v7 : changepoint quasi-nul + saisonnalité dominante ─────────────
-    # cp_scale = 0.01 : Prophet accepte quasi aucune rupture de tendance
-    # L'avantage : il prédit quasi-uniquement sur la saisonnalité détectée
-    # L'inconvénient : on perd la tendance réelle → compensé par le hard floor
-    cp_scale         = 0.01
-    changepoint_range = 0.70   # ignore les 30% finaux (creux de fin 2025)
-    seasonality_ps   = 20.0    # saisonnalité très forte
-    seasonality_mode = "multiplicative" if has_two_years else "additive"
+    cp_scale          = 0.01
+    changepoint_range = 0.70
+    seasonality_ps    = 20.0
+    seasonality_mode  = "multiplicative" if has_two_years else "additive"
 
     model = Prophet(
         growth="logistic",
@@ -1139,23 +1032,52 @@ def prophet_predict(
 
     model.fit(df_fit)
 
-    # ── 5. Prédictions ───────────────────────────────────────────────────────
-    last_hist = df[["ds", "y"]].sort_values("ds")["ds"].max()
+    # ── 5. Point de départ des prédictions ───────────────────────────────────
+    # CORRECTION v7.1 : on utilise last_hist_override si fourni
+    # Cela permet à daily/weekly de prédire dans le FUTUR et non dans le passé
+    if last_hist_override is not None:
+        last_hist = last_hist_override
+    else:
+        last_hist = df[["ds", "y"]].sort_values("ds")["ds"].max()
 
-    future          = model.make_future_dataframe(periods=horizon + TRAINING_CUTOFF_MONTHS + 2, freq=freq)
+    print(f"[Prophet] last_hist = {last_hist.date()} | freq={freq} | horizon={horizon}")
+
+    # ── 6. Calcul du nombre de périodes à générer ────────────────────────────
+    # On génère depuis la fin du df_fit jusqu'à last_hist + horizon périodes
+    # puis on filtre sur > last_hist
+    df_end   = df_fit["ds"].max()
+    if freq == "MS":
+        # périodes mensuelles entre df_end et last_hist + horizon mois
+        extra_periods = horizon + TRAINING_CUTOFF_MONTHS + 4
+    elif freq == "W":
+        # nb semaines entre df_end et last_hist + horizon semaines
+        delta_weeks   = max(0, int((last_hist - df_end).days / 7))
+        extra_periods = delta_weeks + horizon + 4
+    else:
+        # nb jours entre df_end et last_hist + horizon jours
+        delta_days    = max(0, (last_hist - df_end).days)
+        extra_periods = delta_days + horizon + 4
+
+    future          = model.make_future_dataframe(periods=extra_periods, freq=freq)
     future["cap"]   = cap_val
     future["floor"] = floor_val
     future["is_summer"] = future["ds"].dt.month.isin([6, 7, 8, 9]).astype(float)
 
     forecast = model.predict(future)
+
+    # Filtrer : garder uniquement les dates APRÈS last_hist
     pred = forecast[forecast["ds"] > last_hist].copy()
     pred = pred.head(horizon).copy()
+
+    if pred.empty:
+        print(f"[Prophet] ATTENTION : aucune prédiction après {last_hist.date()}, "
+              f"extra_periods={extra_periods}, max_forecast={forecast['ds'].max().date()}")
 
     pred["yhat"]       = pred["yhat"].clip(lower=floor_val, upper=cap_val).round(1)
     pred["yhat_lower"] = pred["yhat_lower"].clip(lower=0, upper=cap_val).round(1)
     pred["yhat_upper"] = pred["yhat_upper"].clip(lower=0, upper=cap_val).round(1)
 
-    # ── 6. Correction avec réservations confirmées ───────────────────────────
+    # ── 7. Correction avec réservations confirmées (monthly only) ────────────
     if df_future is not None and not df_future.empty:
         future_map = dict(zip(df_future["ds"].dt.to_period("M"), df_future["y"]))
         for idx in pred.index:
@@ -1167,8 +1089,9 @@ def prophet_predict(
                     pred.at[idx, "yhat_lower"] = round(cv * 0.9, 1)
                     pred.at[idx, "yhat_upper"] = round(cv * 1.15, 1)
 
-    # ── 7. Métriques ────────────────────────────────────────────────────────
-    hist_fc   = forecast[forecast["ds"] <= last_hist].set_index("ds")["yhat"]
+    # ── 8. Métriques ─────────────────────────────────────────────────────────
+    # On évalue uniquement sur l'historique passé (df_fit)
+    hist_fc   = forecast[forecast["ds"] <= df_fit["ds"].max()].set_index("ds")["yhat"]
     actual_df = df[["ds", "y"]].copy().set_index("ds")["y"]
     merged    = hist_fc.reindex(actual_df.index).fillna(hist_mean)
 
@@ -1190,6 +1113,10 @@ def prophet_predict(
     peaks     = pred[pred["yhat"] >= threshold]["ds"].dt.strftime("%Y-%m-%d").tolist()
 
     n_hybrid = len(df_train)
+
+    print(f"[Prophet] {len(pred_vals)} prédictions générées | "
+          f"min={min(pred_vals) if pred_vals else 0:.0f} "
+          f"max={max(pred_vals) if pred_vals else 0:.0f}")
 
     return {
         "model":      "Prophet",
@@ -1252,7 +1179,7 @@ def arima_predict(
     if monthly_averages:
         global_avg = np.mean(list(monthly_averages.values()))
         for i, (val, dt) in enumerate(zip(values, future_dates)):
-            expected  = monthly_averages.get(dt.month, global_avg)
+            expected   = monthly_averages.get(dt.month, global_avg)
             hard_floor = expected * 0.70
             if val < hard_floor:
                 values[i] = round(hard_floor, 1)
@@ -1344,6 +1271,7 @@ def generate_prediction_insight(
     occupancy_data: Optional[list] = None,
     confirmed_future_total: int = 0,
     historical_stats: dict = None,
+    horizon: int = MAX_HORIZON,
 ) -> str:
     values  = result["values"]
     model   = result["model"]
@@ -1363,12 +1291,12 @@ def generate_prediction_insight(
     max_label = result["labels"][values.index(max_val)]
     min_label = result["labels"][values.index(min_val)]
     pl = {"monthly": "mois", "weekly": "semaine", "daily": "jour"}.get(period, "période")
-    end_label = datetime.strptime(_prediction_end_date()[:7], "%Y-%m").strftime("%B %Y")
+    end_label = datetime.strptime(_prediction_end_date(horizon)[:7], "%Y-%m").strftime("%B %Y")
     history_years = historical_stats.get("history_years", 0) if historical_stats else 0
     history_label = f"{history_years:.1f} ans" if history_years > 1 else f"{int(history_years*12)} mois"
 
     lines = [f"**Analyse Prédictive — Modèle {model}** (réservations hors annulées/refusées)\n"]
-    lines.append(f"Horizon : aujourd'hui → **{end_label}** (12 mois glissants)")
+    lines.append(f"Horizon : aujourd'hui → **{end_label}** ({horizon} périodes)")
     lines.append(f"Historique utilisé : **{history_label}** de données réelles")
     if training_cutoff:
         lines.append(f"Coupure d'entraînement : **{training_cutoff[:7]}** (mois incomplets exclus)")
@@ -1377,7 +1305,6 @@ def generate_prediction_insight(
     else:
         lines.append("")
 
-    # Référence saisonnière
     if monthly_averages:
         avg_summer = np.mean([monthly_averages.get(m, 0) for m in [6, 7, 8]])
         avg_winter = np.mean([monthly_averages.get(m, 0) for m in [12, 1, 2]])
@@ -1437,7 +1364,7 @@ def generate_prediction_insight(
         1 for lbl in result["labels"]
         if datetime.strptime(lbl[:7], "%Y-%m").month in [6, 7, 8]
     )
-    if summer_months > 0:
+    if summer_months > 0 and period == "monthly":
         lines.append(f"\n**Saisonnalité estivale** : {summer_months} période(s) prévue(s).")
         lines.append("→ Forte demande — optimisez disponibilité et prix.")
 
@@ -1474,9 +1401,16 @@ def generate_prediction_insight(
 def predict_reservations():
     period      = request.args.get("period", "monthly")
     total_rooms = int(request.args.get("total_rooms", 50))
-    horizon     = MAX_HORIZON
 
-    cache_key = f"{period}_{total_rooms}"
+    # ── CORRECTION 1 : lire horizon depuis l'URL, respecter MAX_HORIZON ──────
+    horizon = int(request.args.get("horizon", 12))
+    horizon = max(1, min(horizon, MAX_HORIZON))
+
+    # Valider period
+    if period not in ("daily", "weekly", "monthly"):
+        period = "monthly"
+
+    cache_key = f"{period}_{horizon}_{total_rooms}"
     cached    = cache_get(cache_key)
     if cached:
         cached["from_cache"] = True
@@ -1486,43 +1420,66 @@ def predict_reservations():
         history_start   = _history_start_date()
         training_cutoff = _training_cutoff_date()
 
+        print(f"\n{'='*60}")
+        print(f"[Config] period={period} | horizon={horizon} | rooms={total_rooms}")
         print(f"[Config] Historique depuis : {history_start}")
-        print(f"[Config] Coupure training   : {training_cutoff}")
-        print(f"[Config] Fin prédiction     : {_prediction_end_date()}")
+        print(f"[Config] Coupure training  : {training_cutoff}")
+        print(f"[Config] Fin prédiction    : {_prediction_end_date(horizon)}")
+        print(f"{'='*60}")
 
         # ── 1. Données complètes pour le profil saisonnier ────────────────────
+        # Sans cutoff : contient toutes les données y compris juin 2026
         df_raw_full = get_monthly_series()
 
         if len(df_raw_full) == 0:
             return jsonify({"error": "Aucune réservation valide disponible."}), 404
 
-        # ── 2. MOYENNES MENSUELLES ABSOLUES — référence principale ─────────────
+        # ── 2. MOYENNES MENSUELLES ABSOLUES ──────────────────────────────────
         monthly_averages = compute_monthly_averages(df_raw_full)
         seasonal_profile = compute_seasonal_profile(monthly_averages)
 
         # ── 3. Données tronquées pour l'entraînement ──────────────────────────
+        # CORRECTION 2 : cutoff adapté selon la période
+        last_hist_ts: pd.Timestamp = None
+
         if period == "monthly":
             df_train_raw = get_monthly_series(cutoff_date=training_cutoff)
             freq         = "MS"
+            last_hist_ts = None   # Prophet calculera depuis df["ds"].max()
+
         elif period == "weekly":
             df_train_raw = get_weekly_series()
             freq         = "W"
-        else:
+            # Couper les 4 dernières semaines (incomplètes ou peu fiables)
+            cutoff_weekly = (pd.Timestamp.now() - pd.Timedelta(weeks=4)).normalize()
+            df_train_raw  = df_train_raw[df_train_raw["ds"] <= cutoff_weekly].copy()
+            last_hist_ts  = cutoff_weekly
+            print(f"[Weekly] Cutoff appliqué : {cutoff_weekly.date()}, "
+                  f"{len(df_train_raw)} semaines conservées")
+
+        else:  # daily
             df_train_raw = get_daily_series()
             freq         = "D"
+            # Couper les 30 derniers jours (incomplets)
+            cutoff_daily = (pd.Timestamp.now() - pd.Timedelta(days=30)).normalize()
+            df_train_raw = df_train_raw[df_train_raw["ds"] <= cutoff_daily].copy()
+            last_hist_ts = cutoff_daily
+            print(f"[Daily] Cutoff appliqué : {cutoff_daily.date()}, "
+                  f"{len(df_train_raw)} jours conservés")
 
-        # ── 4. Réservations futures confirmées ────────────────────────────────
+        # ── 4. Réservations futures confirmées (mensuel uniquement) ──────────
         df_future = get_future_monthly_series() if period == "monthly" else pd.DataFrame()
 
         # ── 5. Nettoyage ──────────────────────────────────────────────────────
-        df_train = validate_and_clean(df_train_raw)
+        df_train = validate_and_clean(df_train_raw) if period == "monthly" else df_train_raw.copy()
         df_full  = validate_and_clean(df_raw_full)
 
         # ── 6. Sélection et exécution du modèle ───────────────────────────────
         use_fallback = False
         result = None
 
-        if len(df_train) >= MIN_ROWS_PROPHET:
+        min_rows = MIN_ROWS_PROPHET
+        if len(df_train) >= min_rows:
             try:
                 result = prophet_predict(
                     df=df_train,
@@ -1531,29 +1488,39 @@ def predict_reservations():
                     history_start=history_start,
                     df_future=df_future if period == "monthly" else None,
                     monthly_averages=monthly_averages if period == "monthly" else None,
+                    last_hist_override=last_hist_ts,   # ← CORRECTION 2
                 )
 
-                # ── VALIDATION CRITIQUE : les prédictions sont-elles réalistes ?
-                if period == "monthly" and monthly_averages:
+                # Vérification : on a bien `horizon` prédictions
+                if len(result.get("values", [])) < horizon:
+                    print(f"[Pipeline] Prophet a retourné {len(result.get('values',[]))} "
+                          f"prédictions au lieu de {horizon} → Fallback")
+                    use_fallback = True
+
+                # Validation saisonnière (mensuel uniquement)
+                if not use_fallback and period == "monthly" and monthly_averages:
                     is_valid = validate_prophet_predictions(result, monthly_averages, tolerance=0.50)
                     if not is_valid:
                         print("[Pipeline] Prophet invalide → SeasonalDecomp")
                         use_fallback = True
                     else:
-                        # Appliquer hard floor même si Prophet est "valide"
                         result = apply_hard_floor(result, monthly_averages, floor_factor=0.70)
 
                 # Vérifier explosion
-                hist_max = float(df_train["y"].max())
-                pred_max = max(result["values"]) if result["values"] else 0
-                if hist_max > 0 and pred_max > hist_max * 3:
-                    print(f"[Prophet] Explosion ({pred_max:.0f}) → Fallback")
-                    use_fallback = True
+                if not use_fallback:
+                    hist_max = float(df_train["y"].max()) if len(df_train) > 0 else 1
+                    pred_max = max(result["values"]) if result["values"] else 0
+                    if hist_max > 0 and pred_max > hist_max * 3:
+                        print(f"[Prophet] Explosion ({pred_max:.0f}) → Fallback")
+                        use_fallback = True
 
             except Exception as exc:
                 print(f"[Prophet] Erreur : {exc}")
+                import traceback
+                traceback.print_exc()
                 use_fallback = True
         else:
+            print(f"[Pipeline] Données insuffisantes ({len(df_train)} < {min_rows}) → Fallback")
             use_fallback = True
 
         if use_fallback or result is None:
@@ -1565,21 +1532,33 @@ def predict_reservations():
                     monthly_averages=monthly_averages,
                     df_future=df_future,
                 )
-            elif len(df_full) >= MIN_ROWS_ARIMA:
-                result = arima_predict(df_full, horizon, monthly_averages)
+            elif len(df_train) >= MIN_ROWS_ARIMA:
+                print("[Pipeline] Utilisation ARIMA")
+                result = arima_predict(df_train, horizon,
+                                       monthly_averages if period == "monthly" else None)
             else:
-                result = naive_predict_seasonal(df_full, horizon)
+                print("[Pipeline] Utilisation NaiveWMA")
+                result = naive_predict_seasonal(df_train if len(df_train) > 0 else df_full, horizon)
 
         # ── 7. Réalisations, KPIs, stats ─────────────────────────────────────
-        realization      = get_realization_series(period)
+        realization      = get_realization_series(period, horizon)
         confirmed_future = get_confirmed_future_reservations(horizon)
-        occupancy_breakdown = estimate_occupancy_rate(
-            predicted_monthly=result["values"],
-            confirmed_monthly=confirmed_future["monthly"],
-            labels=result["labels"],
-            total_rooms=total_rooms,
-        )
-        historical_stats = compute_historical_stats(df_full)
+
+        # occupancy uniquement pour mensuel
+        if period == "monthly":
+            occupancy_breakdown = estimate_occupancy_rate(
+                predicted_monthly=result["values"],
+                confirmed_monthly=confirmed_future["monthly"],
+                labels=result["labels"],
+                total_rooms=total_rooms,
+            )
+        else:
+            occupancy_breakdown = []
+
+        # CORRECTION 3 : historical utilise df_raw_full SANS cutoff
+        # → les données récentes (juin 2026, etc.) sont bien affichées
+        df_raw_full_clean = validate_and_clean(df_raw_full)
+        historical_stats  = compute_historical_stats(df_raw_full_clean)
 
         try:
             df_daily   = get_daily_series()
@@ -1588,13 +1567,16 @@ def predict_reservations():
             xgb_result = {"available": False}
 
         insight = generate_prediction_insight(
-            result, period, df_full, history_start,
-            monthly_averages, occupancy_breakdown,
+            result, period, df_raw_full_clean, history_start,
+            monthly_averages if period == "monthly" else None,
+            occupancy_breakdown,
             confirmed_future["total"], historical_stats,
+            horizon=horizon,
         )
 
-        # ── 8. Historique pour graphique ──────────────────────────────────────
-        df_hist_display = df_full.tail(min(len(df_full), horizon * 2))
+        # ── 8. Historique pour graphique — CORRECTION 3 ───────────────────────
+        # On prend les `horizon * 2` derniers mois RÉELS (sans cutoff)
+        df_hist_display = df_raw_full_clean.tail(min(len(df_raw_full_clean), horizon * 2))
         historical = {
             "labels": [d.strftime("%Y-%m-%d") for d in df_hist_display["ds"]],
             "values": df_hist_display["y"].round(1).tolist(),
@@ -1602,8 +1584,12 @@ def predict_reservations():
 
         # ── 9. Prévision revenus ─────────────────────────────────────────────
         revenue_pred = None
-        if "revenue" in df_full.columns and df_full["revenue"].sum() > 0 and df_full["y"].sum() > 0:
-            avg_rev_per_res = float(df_full["revenue"].sum() / df_full["y"].sum())
+        if ("revenue" in df_raw_full_clean.columns
+                and df_raw_full_clean["revenue"].sum() > 0
+                and df_raw_full_clean["y"].sum() > 0):
+            avg_rev_per_res = float(
+                df_raw_full_clean["revenue"].sum() / df_raw_full_clean["y"].sum()
+            )
             revenue_pred = {
                 "labels": result["labels"],
                 "values": [round(v * avg_rev_per_res, 2) for v in result["values"]],
@@ -1633,7 +1619,7 @@ def predict_reservations():
             "training_cutoff":      training_cutoff,
             "history_years":        historical_stats.get("history_years", 0),
             "total_history_months": historical_stats.get("total_months", 0),
-            "prediction_end_date":  _prediction_end_date(),
+            "prediction_end_date":  _prediction_end_date(horizon),
             "prediction":           result,
             "realization":          realization,
             "historical":           historical,
@@ -1761,20 +1747,21 @@ if __name__ == "__main__":
     end_display     = datetime.strptime(_prediction_end_date()[:7], "%Y-%m").strftime("%B %Y")
 
     print("=" * 70)
-    print("  Prediction Server v7.0 — Hotel ML Forecasting")
+    print("  Prediction Server v7.1 — Hotel ML Forecasting")
     print("  Port      : 5002")
     print(f"  Historique: depuis {history_start}")
     print(f"  Coupure   : {training_cutoff} ({TRAINING_CUTOFF_MONTHS} mois incomplets exclus)")
-    print(f"  Horizon   : 12 mois → {end_display}")
-    print("  Nouveautés v7 :")
-    print("    - compute_monthly_averages() : référence absolue par mois calendaire")
-    print("    - validate_prophet_predictions() : bascule auto si Prophet dévie >50%")
-    print("    - apply_hard_floor() : plancher 70% de la moyenne mensuelle réelle")
-    print("    - SeasonalDecomp : modèle de secours toujours ancré sur l'historique")
-    print("    - cp_scale=0.01 : tendance quasi-neutralisée dans Prophet")
-    print("    - Tendance annuelle plafonnée à -5%/an max dans SeasonalDecomp")
-    print("  GET  : /predict-reservations?period=monthly&total_rooms=50")
-    print("  GET  : /model-info  (affiche monthly_averages)")
+    print(f"  Horizon   : max {MAX_HORIZON} périodes (paramètre ?horizon= respecté)")
+    print(f"  Max préd  : {end_display}")
+    print("  Corrections v7.1 :")
+    print("    - horizon lu depuis ?horizon= (plus écrasé par MAX_HORIZON)")
+    print("    - daily/weekly : cutoff + last_hist_override (prédictions futures réelles)")
+    print("    - historical : utilise df_raw_full sans cutoff (juin 2026 visible)")
+    print("    - fallback utilise df_train (série coupée) pour cohérence")
+    print("  GET  : /predict-reservations?period=monthly&horizon=12&total_rooms=50")
+    print("  GET  : /predict-reservations?period=weekly&horizon=8")
+    print("  GET  : /predict-reservations?period=daily&horizon=30")
+    print("  GET  : /model-info")
     print("  GET  : /status-check")
     print("  POST : /retrain")
     print("=" * 70)

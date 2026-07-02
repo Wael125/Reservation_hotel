@@ -6,7 +6,7 @@
       bookingRoom: 'double',
       area: '25 m²',
       price: '110 DT / nuit',
-      image: 'images/double.png',
+      image: 'images/Chambre-Double-Vue-Mer.jpg',
       kind: 'Double',
       desc: 'Élégante chambre avec balcon, vue sur la Méditerranée et équipements premium inspirés du Royal El Mansour.',
       features: ['Vue mer', 'Balcon privé', 'Climatisation']
@@ -17,7 +17,7 @@
       bookingRoom: 'double',
       area: '25 m²',
       price: '115 DT / nuit',
-      image: 'images/double.png',
+      image: 'images/Chambre-Double-Vue-Piscine.jpg',
       kind: 'Double',
       desc: 'Chambre confortable avec vue sur la piscine, idéale pour un séjour détente à Mahdia.',
       features: ['Vue piscine', 'Wi-Fi gratuit', 'Salle de bains moderne']
@@ -28,7 +28,7 @@
       bookingRoom: 'double',
       area: '28 m²',
       price: '130 DT / nuit',
-      image: 'images/double.png',
+      image: 'images/Chambre-Double-Vue-Mer2.jpg',
       kind: 'Double',
       desc: 'Plus d’espace et un balcon spacieux pour profiter pleinement du panorama côtier.',
       features: ['28 m²', 'Balcon large', 'Lit king size']
@@ -50,7 +50,7 @@
       bookingRoom: 'suite',
       area: '50 m²',
       price: '180 DT / nuit',
-      image: 'images/suite.png',
+      image: 'images/double.png',
       kind: 'Familiale',
       desc: 'Deux chambres communicantes pour un confort optimal en famille ou entre amis.',
       features: ['Chambres communicantes', 'Espaces séparés', 'Balcon']
@@ -61,7 +61,7 @@
       bookingRoom: 'suite',
       area: '42 m²',
       price: '220 DT / nuit',
-      image: 'images/suite.png',
+      image: 'images/Junior-Suite-Vue-Mer.jpg',
       kind: 'Suite',
       desc: 'Suite avec salon, espace détente et vue panoramique sur la côte de Mahdia.',
       features: ['Salon séparé', 'Terrasse', 'Lit king size']

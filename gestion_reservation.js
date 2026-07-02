@@ -3,6 +3,7 @@
    Réservations : filtres live · CRUD · modals · tri · toast
    + Sélection intelligente chambre/type avec check_availability
    + Calcul automatique du prix total
+   + Notification toast quand l'email de confirmation est envoyé
 ═══════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -16,7 +17,6 @@ const ROOM_TYPES = ['Simple', 'Double', 'Triple', 'Suite'];
 
 // ── Modes de paiement fixes ───────────────────────────────
 const PAYMENT_MODES = ['Carte bancaire', 'Espèces', 'Virement', 'PayPal'];
-//  ↑ Chèque remplacé par PayPal
 
 // ── Statuts valides ───────────────────────────────────────
 const RES_STATUSES = [
@@ -185,7 +185,7 @@ function _buildFormSelects() {
     });
   }
 
-  // Modes de paiement (PayPal remplace Chèque)
+  // Modes de paiement
   const payEl = _resEl('resFormPayment');
   if (payEl && payEl.tagName === 'SELECT') {
     payEl.innerHTML = '<option value="">— Choisir —</option>';
@@ -196,7 +196,7 @@ function _buildFormSelects() {
     });
   }
 
-  // Statuts dans le formulaire (liste complète)
+  // Statuts dans le formulaire
   const statEl = _resEl('resFormStatus');
   if (statEl && statEl.tagName === 'SELECT') {
     statEl.innerHTML = '';
@@ -220,7 +220,6 @@ function _buildFormSelects() {
 
 // ═══════════════════════════════════════════════════════════
 //  LOGIQUE DISPONIBILITÉ
-//  → Chambre activée uniquement si dates ET type de chambre sont remplis
 // ═══════════════════════════════════════════════════════════
 
 function _bindAvailabilityLogic() {
@@ -231,9 +230,6 @@ function _bindAvailabilityLogic() {
 
   if (!checkIn || !checkOut || !typeEl || !roomEl) return;
 
-  // En mode ajout, on bloque les dates passées via l'attribut min
-  // (géré dynamiquement dans _resOpenAdd / _resOpenEdit)
-
   checkIn.addEventListener('change', () => {
     if (checkIn.value && checkOut.value && checkOut.value <= checkIn.value) {
       checkOut.value = '';
@@ -242,8 +238,6 @@ function _bindAvailabilityLogic() {
   });
 
   checkOut.addEventListener('change', _triggerAvailCheck);
-
-  // ↓ Déclenchement aussi au changement de type
   typeEl.addEventListener('change', _triggerAvailCheck);
 
   roomEl.addEventListener('change', () => {
@@ -257,13 +251,12 @@ function _bindAvailabilityLogic() {
 async function _triggerAvailCheck() {
   const checkIn  = _resEl('resFormCheckIn')?.value;
   const checkOut = _resEl('resFormCheckOut')?.value;
-  const roomType = _resEl('resFormRoomType')?.value || '';   // ← requis maintenant
+  const roomType = _resEl('resFormRoomType')?.value || '';
   const roomEl   = _resEl('resFormRoomNumber');
   const hint     = _resEl('resFormRoomHint');
 
   if (!roomEl) return;
 
-  // ── Condition : dates ET type obligatoires pour lancer la recherche ──
   if (!checkIn || !checkOut) {
     _resetRoomSelect('Choisissez les dates d\'abord', true);
     if (hint) { hint.textContent = ''; hint.className = 'res-avail-hint'; }
@@ -285,8 +278,6 @@ async function _triggerAvailCheck() {
         checkInDate:  checkIn,
         checkOutDate: checkOut,
         roomType,
-        // En mode édition, on exclut la réservation en cours pour que
-        // sa propre chambre reste proposée comme disponible
         excludeReservationId: _resEditMode ? (_resEl('resFormId')?.value || null) : null,
       }),
     });
@@ -348,12 +339,12 @@ async function loadReservations() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Erreur API');
     _resAll = (data.data || []).filter(r =>
-  ['En attente', 'Confirmée', 'Checked_in', 'Checked_out'].includes(r.Status)
-);
-_populateResFilterDropdowns(
-  ['En attente', 'Confirmée', 'Checked_in', 'Checked_out'],
-  data.room_types || []
-);
+      ['En attente', 'Confirmée', 'Checked_in', 'Checked_out'].includes(r.Status)
+    );
+    _populateResFilterDropdowns(
+      ['En attente', 'Confirmée', 'Checked_in', 'Checked_out'],
+      data.room_types || []
+    );
     _resApplyFilters();
   } catch (err) {
     console.error('[Reservations]', err);
@@ -429,6 +420,7 @@ function _resUpdateSortHeaders() {
 // ═══════════════════════════════════════════════════════════
 //  RENDER TABLE
 // ═══════════════════════════════════════════════════════════
+
 function _resClientScore(r) {
   const total  = parseInt(r._hist_total)       || 0;
   const fiable = parseInt(r._hist_fiables)     || 0;
@@ -485,7 +477,6 @@ function _resRenderTable(list, search = '') {
     const price = _resFmtMoney(r.totalPrice);
     const score = _resClientScore(r);
 
-    // ── Score visible uniquement si la décision est encore ouverte ──
     const showScore = ['En attente', 'Confirmée'].includes(r.Status);
 
     let actions = '';
@@ -566,6 +557,7 @@ function _resRenderTable(list, search = '') {
 
 // ═══════════════════════════════════════════════════════════
 //  CHANGEMENT RAPIDE DE STATUT
+//  ✉️  Toast spécial si email de confirmation envoyé
 // ═══════════════════════════════════════════════════════════
 
 async function _resQuickStatus(id, newStatus, btn) {
@@ -578,7 +570,19 @@ async function _resQuickStatus(id, newStatus, btn) {
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
-    _resToast('✅ Statut mis à jour', 'success');
+
+    // ── Feedback selon résultat email ──────────────────────
+    if (newStatus === 'Confirmée') {
+      if (data.email_sent) {
+        _resToast('✅ Réservation confirmée — 📧 Email envoyé au client', 'success');
+      } else {
+        // Confirmation OK mais email en échec : on avertit sans bloquer
+        _resToast('✅ Réservation confirmée — ⚠️ Email non envoyé (vérifiez la config SMTP)', 'warning');
+      }
+    } else {
+      _resToast('✅ Statut mis à jour', 'success');
+    }
+
     await loadReservations();
   } catch (err) {
     _resToast('❌ ' + err.message, 'error');
@@ -599,7 +603,6 @@ function _resOpenAdd() {
 
   _resResetForm();
 
-  // En mode ajout : bloquer les dates passées
   const today = new Date().toISOString().split('T')[0];
   const ci = _resEl('resFormCheckIn');
   const co = _resEl('resFormCheckOut');
@@ -611,9 +614,6 @@ function _resOpenAdd() {
 
 // ═══════════════════════════════════════════════════════════
 //  MODAL — Ouvrir Modifier
-//  Stratégie pro : on pré-charge toutes les données PUIS on
-//  lance la vérification de dispo en injectant la chambre
-//  courante comme option sélectionnée (même si hors dispo).
 // ═══════════════════════════════════════════════════════════
 
 async function _resOpenEdit(id) {
@@ -627,13 +627,11 @@ async function _resOpenEdit(id) {
   _resEl('resFormId').value          = r.id;
   _resEl('resFormBtn').innerHTML     = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Enregistrer';
 
-  // ── Supprimer la contrainte min sur les dates en mode édition ──
   const ci = _resEl('resFormCheckIn');
   const co = _resEl('resFormCheckOut');
   if (ci) { ci.removeAttribute('min'); ci.value = r.checkInDate  || ''; }
   if (co) { co.removeAttribute('min'); co.value = r.checkOutDate || ''; }
 
-  // ── Champs simples ──
   _resEl('resFormClient').value   = r.clientName       || '';
   _resEl('resFormEmail').value    = r.email            || '';
   _resEl('resFormPhone').value    = r.phoneNumber      || '';
@@ -646,36 +644,24 @@ async function _resOpenEdit(id) {
   const payEl = _resEl('resFormPayment');
   if (payEl) payEl.value = r.paymentDetails || '';
 
-  // ── Type de chambre ──
   const typeEl = _resEl('resFormRoomType');
   if (typeEl) typeEl.value = r.roomType || '';
 
-  // ── Numéro de chambre : afficher immédiatement la valeur DB ──
-  //    puis lancer la dispo en arrière-plan pour enrichir la liste
   const roomEl = _resEl('resFormRoomNumber');
   const hint   = _resEl('resFormRoomHint');
   if (roomEl) {
-    // 1) Afficher la chambre actuelle de suite (non bloquant)
     roomEl.innerHTML = `<option value="${_resEsc(r.roomNumber || '')}" selected>${_resEsc(r.roomNumber || '—')} (actuel)</option>`;
     roomEl.disabled  = false;
 
     if (hint) { hint.textContent = '⏳ Vérification des disponibilités…'; hint.className = 'res-avail-hint'; }
 
-    // 2) Charger les chambres disponibles en arrière-plan
     _loadAvailForEdit(r.checkInDate, r.checkOutDate, r.roomType, r.roomNumber, r.id);
   }
 
-  // ── Afficher le résumé de prix existant ──
   _showPriceHint(parseFloat(r.totalPrice) || 0);
-
   _resOpenModal('resFormModal');
 }
 
-/**
- * Chargement asynchrone des chambres disponibles en mode édition.
- * La chambre actuelle de la réservation est toujours incluse,
- * même si elle est techniquement "occupée" (par cette même réservation).
- */
 async function _loadAvailForEdit(checkIn, checkOut, roomType, currentRoom, reservationId) {
   const roomEl = _resEl('resFormRoomNumber');
   const hint   = _resEl('resFormRoomHint');
@@ -688,7 +674,6 @@ async function _loadAvailForEdit(checkIn, checkOut, roomType, currentRoom, reser
         checkInDate:  checkIn,
         checkOutDate: checkOut,
         roomType:     roomType || '',
-        // Passer l'ID pour que le PHP exclue cette réservation du check
         excludeReservationId: reservationId,
       }),
     });
@@ -696,19 +681,16 @@ async function _loadAvailForEdit(checkIn, checkOut, roomType, currentRoom, reser
 
     _availRooms = data.rooms || [];
 
-    // S'assurer que la chambre actuelle est toujours dans la liste
     const alreadyIn = _availRooms.some(rm => rm.roomnumber === currentRoom);
     if (!alreadyIn && currentRoom) {
       _availRooms.unshift({ roomnumber: currentRoom, roomType: roomType, price: 0, _current: true });
     }
 
     if (!_availRooms.length) {
-      // Garder l'option actuelle seulement
       if (hint) { hint.textContent = '⚠️ Aucune autre chambre disponible'; hint.className = 'res-avail-hint'; }
       return;
     }
 
-    // Reconstruire le select avec toutes les options
     const prevValue = roomEl.value || currentRoom;
     roomEl.innerHTML = '<option value="">— Choisir une chambre —</option>';
     _availRooms.forEach(r => {
@@ -719,7 +701,6 @@ async function _loadAvailForEdit(checkIn, checkOut, roomType, currentRoom, reser
       roomEl.appendChild(o);
     });
     roomEl.disabled = false;
-    // Remettre la sélection précédente
     roomEl.value = prevValue;
 
     if (hint) {
@@ -729,13 +710,13 @@ async function _loadAvailForEdit(checkIn, checkOut, roomType, currentRoom, reser
     }
 
   } catch (err) {
-    // En cas d'erreur réseau, on garde la chambre actuelle affichée
     if (hint) { hint.textContent = '⚠️ Dispo non vérifiée (erreur réseau)'; hint.className = 'res-avail-hint'; }
   }
 }
 
 // ═══════════════════════════════════════════════════════════
 //  SOUMETTRE LE FORMULAIRE
+//  ✉️  Toast selon résultat email si statut = "Confirmée"
 // ═══════════════════════════════════════════════════════════
 
 async function _resSubmitForm() {
@@ -747,6 +728,7 @@ async function _resSubmitForm() {
   const roomType   = _resEl('resFormRoomType').value.trim();
   const roomNumber = _resEl('resFormRoomNumber').value.trim();
   const price      = _resEl('resFormPrice').value;
+  const newStatus  = _resEl('resFormStatus').value;
 
   if (!clientName || !email || !checkIn || !checkOut || !roomType || !price) {
     _resToast('⚠️ Veuillez remplir tous les champs obligatoires', 'error');
@@ -774,8 +756,8 @@ async function _resSubmitForm() {
     paymentDetails:   _resEl('resFormPayment').value,
     pension:          _resEl('resFormPension').value.trim(),
     totalPrice:       parseFloat(price),
-    status:           _resEl('resFormStatus').value,
-    Status:           _resEl('resFormStatus').value,
+    status:           newStatus,
+    Status:           newStatus,
   };
 
   if (_resEditMode && id) payload.id = parseInt(id);
@@ -792,8 +774,20 @@ async function _resSubmitForm() {
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
+
     _resCloseModal('resFormModal');
-    _resToast(_resEditMode ? '✅ Réservation modifiée' : '✅ Réservation créée', 'success');
+
+    // ── Toast avec feedback email si "Confirmée" ──────────
+    if (_resEditMode && newStatus === 'Confirmée') {
+      if (data.email_sent) {
+        _resToast('✅ Réservation confirmée — 📧 Email envoyé au client', 'success');
+      } else {
+        _resToast('✅ Réservation confirmée — ⚠️ Email non envoyé (vérifiez SMTP)', 'warning');
+      }
+    } else {
+      _resToast(_resEditMode ? '✅ Réservation modifiée' : '✅ Réservation créée', 'success');
+    }
+
     await loadReservations();
   } catch (err) {
     _resToast('❌ ' + err.message, 'error');
@@ -845,8 +839,7 @@ function _populateResFilterDropdowns(statusList, roomTypes) {
   if (sel) {
     const cur = sel.value;
     sel.innerHTML = '<option value="">Tous les statuts</option>';
-    // Utiliser la liste complète des statuts + ceux venant de la BDD
-const allStatuses = [...new Set([...statusList])];
+    const allStatuses = [...new Set([...statusList])];
     allStatuses.forEach(s => {
       const o = document.createElement('option');
       o.value = s; o.textContent = s;
@@ -954,13 +947,14 @@ function _resResetForm() {
   _hidePriceHint();
 }
 
+// ── Toast — supporte aussi le type "warning" ──────────────
 function _resToast(msg, type = 'success') {
   const t = _resEl('resGlobalToast');
   if (!t) return;
   clearTimeout(_resToastTimer);
   t.textContent = msg;
   t.className   = `res-toast ${type} show`;
-  _resToastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  _resToastTimer = setTimeout(() => t.classList.remove('show'), 4500);
 }
 
 // ── Utilitaires ──
@@ -987,7 +981,7 @@ function _resHighlight(str, term) {
   return str.replace(re, '<mark>$1</mark>');
 }
 
-// ── Métadonnées statut (liste complète) ──
+// ── Métadonnées statut ────────────────────────────────────
 function _resStatusMeta(s) {
   const k = String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if (k === 'confirmee'  || k === 'confirmée')                                  return { cls: 'confirmée',   label: 'Confirmée'   };
@@ -997,5 +991,6 @@ function _resStatusMeta(s) {
   if (k === 'checked_in' || k === 'checked in')                                 return { cls: 'checked_in',  label: 'Checked in'  };
   if (k === 'checked_out'|| k === 'checked out')                                return { cls: 'checked_out', label: 'Checked out' };
   if (k === 'complete'   || k === 'completé' || k === 'completed')              return { cls: 'completed',   label: 'Completé'    };
+  if (k === 'supprime'   || k === 'supprimé')                              return { cls: 'supprime',   label: 'Supprimé'    };
   return { cls: k.replace(/\s+/g,'_'), label: s || '—' };
 }

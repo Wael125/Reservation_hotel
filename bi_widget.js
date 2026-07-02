@@ -1,6 +1,7 @@
 /**
  * bi_widget.js  —  Business Intelligence Widget v3 (Ollama/DeepSeek)
  * Compatible avec dashboard_admin.html / dashboard_admin.js (showView, LOGIN_ID, Chart.js)
+ * Tables: customer, reservation, room, activites, avis, reclamations
  */
 
 (function () {
@@ -84,6 +85,21 @@
         background:rgba(255,255,255,.05);
         border-color:rgba(255,255,255,.08);
         color:var(--text,#eceef2);
+      }
+
+      /* Tabs pour catégories de chips */
+      #bi-chips-tabs { display:flex; gap:4px; margin-bottom:6px; }
+      #bi-chips-tabs button {
+        padding:2px 8px; border-radius:8px; font-size:10px;
+        cursor:pointer; background:rgba(255,255,255,.06);
+        color:var(--text-muted,#6b7280);
+        border:1px solid rgba(255,255,255,.1);
+        font-family:inherit; transition:.15s;
+      }
+      #bi-chips-tabs button.active {
+        background:rgba(201,165,90,.2);
+        color:#c9a55a;
+        border-color:rgba(201,165,90,.4);
       }
     `;
     document.head.appendChild(s);
@@ -385,6 +401,11 @@
       room:"🏨", occup:"🔑", arrivee:"🚪", checkin:"🚪",
       cancel:"❌", annul:"❌", moy:"📊", avg:"📊",
       total:"💎", taux:"📈", pct:"📈", nombre:"🔢",
+      // Nouvelles icônes pour les nouvelles tables
+      avis:"⭐", note:"⭐", commentaire:"💬", satisfaction:"😊",
+      reclamation:"⚠️", urgence:"🚨", statut:"📋", ouvert:"🔓",
+      resolu:"✅", activite:"🎯", capacite:"👥", duree:"⏱",
+      localisation:"📍", type:"🏷️",
     };
 
     function guessIcon(key) {
@@ -471,22 +492,29 @@
   }
 
   /* ══════════════════════════════════════════════
-     ICON DYNAMIQUE
+     ICON DYNAMIQUE — étendu avec nouvelles tables
   ══════════════════════════════════════════════ */
   function getIcon(intent) {
     if (!intent) return "📊";
     const i = intent.toLowerCase();
-    if (i.includes("age"))        return "📊";
+    if (i.includes("age"))                                          return "📊";
     if (i.includes("revenu") || i.includes("chiffre") || i.includes("revenue")) return "💰";
-    if (i.includes("reservation")) return "📅";
-    if (i.includes("pays") || i.includes("country"))  return "🌍";
-    if (i.includes("occup"))      return "🏨";
-    if (i.includes("statut") || i.includes("status")) return "📋";
-    if (i.includes("pension"))    return "🍽️";
-    if (i.includes("paiement") || i.includes("payment")) return "💳";
-    if (i.includes("client") || i.includes("vip"))    return "⭐";
-    if (i.includes("kpi") || i.includes("general"))   return "📈";
-    if (i.includes("chambre") || i.includes("room"))  return "🛏️";
+    if (i.includes("reservation"))                                  return "📅";
+    if (i.includes("pays") || i.includes("country"))               return "🌍";
+    if (i.includes("occup"))                                        return "🏨";
+    if (i.includes("statut") || i.includes("status"))              return "📋";
+    if (i.includes("pension"))                                      return "🍽️";
+    if (i.includes("paiement") || i.includes("payment"))           return "💳";
+    if (i.includes("client") || i.includes("vip"))                 return "⭐";
+    if (i.includes("kpi") || i.includes("general"))                return "📈";
+    if (i.includes("chambre") || i.includes("room"))               return "🛏️";
+    // Nouvelles tables
+    if (i.includes("avis") || i.includes("note") || i.includes("satisfaction")) return "⭐";
+    if (i.includes("reclamation") || i.includes("plainte"))        return "⚠️";
+    if (i.includes("urgence"))                                      return "🚨";
+    if (i.includes("activite") || i.includes("activit"))           return "🎯";
+    if (i.includes("localisation"))                                 return "📍";
+    if (i.includes("commentaire"))                                  return "💬";
     return "📊";
   }
 
@@ -594,7 +622,7 @@
 
       // Messages très courts (salutations) → chatbot original
       const words = message.split(/\s+/).length;
-      if (words <= 2 && !/(kpi|stat|résumé|bilan|top|rapport|dashboard)/i.test(message)) {
+      if (words <= 2 && !/(kpi|stat|résumé|bilan|top|rapport|dashboard|avis|note|reclamation|activite)/i.test(message)) {
         return originalSend.call(this);
       }
 
@@ -635,14 +663,34 @@
   }
 
   /* ══════════════════════════════════════════════
-     CHIPS DE SUGGESTION
+     CHIPS DE SUGGESTION — organisées par catégorie
   ══════════════════════════════════════════════ */
-  const CHIPS = [
-    "KPI généraux", "Réservations ce mois", "Évolution des revenus",
-    "Top 10 clients", "Clients par pays", "Taux d'occupation",
-    "Modes de paiement", "Réservations annulées", "Âge moyen des clients",
-    "Revenu par type de chambre",
-  ];
+  const CHIPS_CATEGORIES = {
+    "🏨 Hôtel": [
+      "KPI généraux", "Réservations ce mois", "Évolution des revenus",
+      "Taux d'occupation", "Revenus par type de chambre",
+    ],
+    "👥 Clients": [
+      "Top 10 clients", "Clients par pays", "Âge moyen des clients",
+      "Distribution des âges", "Modes de paiement",
+    ],
+    "⭐ Avis": [
+      "Note moyenne par mois", "Répartition des notes",
+      "Clients avec avis négatifs", "Top clients par avis",
+      "Évolution satisfaction",
+    ],
+    "⚠️ Réclamations": [
+      "Réclamations par urgence", "Réclamations ouvertes",
+      "Réclamations résolues vs ouvertes", "Réclamations par type",
+      "KPI réclamations",
+    ],
+    "🎯 Activités": [
+      "Activités par type", "Activités par localisation",
+      "Capacité des activités", "Activités disponibles",
+    ],
+  };
+
+  let _activeChipCategory = Object.keys(CHIPS_CATEGORIES)[0];
 
   function addBIChips() {
     const chatContainer = document.getElementById("chatContainer");
@@ -650,21 +698,49 @@
 
     const wrap = document.createElement("div");
     wrap.id    = "bi-chips";
-    wrap.style.cssText = `padding:6px 10px 4px;display:flex;flex-wrap:wrap;gap:5px;
+    wrap.style.cssText = `padding:6px 10px 4px;
       background:rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.05);`;
 
-    CHIPS.forEach(s => {
+    // Tabs
+    const tabsDiv = document.createElement("div");
+    tabsDiv.id = "bi-chips-tabs";
+    Object.keys(CHIPS_CATEGORIES).forEach(cat => {
       const btn = document.createElement("button");
-      btn.textContent = s;
-      btn.style.cssText = `padding:3px 9px;border-radius:10px;font-size:10.5px;
-        cursor:pointer;background:rgba(201,165,90,.14);color:#c9a55a;
-        border:1px solid rgba(201,165,90,.22);font-family:inherit;white-space:nowrap;`;
+      btn.textContent = cat;
+      btn.className   = cat === _activeChipCategory ? "active" : "";
       btn.addEventListener("click", () => {
-        const inp = document.getElementById("msg");
-        if (inp) { inp.value = s; window.send(); }
+        _activeChipCategory = cat;
+        document.querySelectorAll("#bi-chips-tabs button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderChipButtons();
       });
-      wrap.appendChild(btn);
+      tabsDiv.appendChild(btn);
     });
+    wrap.appendChild(tabsDiv);
+
+    // Chips container
+    const chipsDiv = document.createElement("div");
+    chipsDiv.id    = "bi-chips-buttons";
+    chipsDiv.style.cssText = `display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;`;
+    wrap.appendChild(chipsDiv);
+
+    function renderChipButtons() {
+      chipsDiv.innerHTML = "";
+      (CHIPS_CATEGORIES[_activeChipCategory] || []).forEach(s => {
+        const btn = document.createElement("button");
+        btn.textContent = s;
+        btn.style.cssText = `padding:3px 9px;border-radius:10px;font-size:10.5px;
+          cursor:pointer;background:rgba(201,165,90,.14);color:#c9a55a;
+          border:1px solid rgba(201,165,90,.22);font-family:inherit;white-space:nowrap;`;
+        btn.addEventListener("click", () => {
+          const inp = document.getElementById("msg");
+          if (inp) { inp.value = s; window.send(); }
+        });
+        chipsDiv.appendChild(btn);
+      });
+    }
+
+    renderChipButtons();
 
     const inputArea = chatContainer.querySelector(".input-area");
     if (inputArea) chatContainer.insertBefore(wrap, inputArea);

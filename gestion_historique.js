@@ -8,7 +8,7 @@
 const HIST_API = 'gestion_reservation.php';
 
 // Statuts qui appartiennent à l'historique
-const HIST_STATUSES = ['Annulé', 'Refusé', 'Completé'];
+const HIST_STATUSES = ['Annulé', 'Refusé', 'Completé', 'Supprimé'];
 
 let _histAll     = [];
 let _histSortCol = 'id';
@@ -209,6 +209,7 @@ function _histUpdateStats() {
   const completed = _histAll.filter(r => r.Status === 'Completé').length;
   const cancelled = _histAll.filter(r => r.Status === 'Annulé').length;
   const refused   = _histAll.filter(r => r.Status === 'Refusé').length;
+  const deleted   = _histAll.filter(r => r.Status === 'Supprimé').length;
   const revenue   = _histAll
     .filter(r => r.Status === 'Completé')
     .reduce((s, r) => s + (parseFloat(r.totalPrice) || 0), 0);
@@ -217,6 +218,7 @@ function _histUpdateStats() {
   if (s('histStatCompleted')) s('histStatCompleted').textContent = completed;
   if (s('histStatCancelled')) s('histStatCancelled').textContent = cancelled;
   if (s('histStatRefused'))   s('histStatRefused').textContent   = refused;
+  if (s('histStatDeleted'))   s('histStatDeleted').textContent   = deleted;
   if (s('histStatRevenue'))   s('histStatRevenue').textContent   = revenue.toLocaleString('fr-FR') + ' TND';
 }
 

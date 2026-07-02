@@ -482,6 +482,15 @@
       const data = await res.json();
 
       if (data.success) {
+        // Notifier l'admin en temps réel via la cloche
+        if (typeof window.addReclamationNotification === 'function') {
+          window.addReclamationNotification({
+            id         : data.id,
+            clientName : _resa.clientName || 'Client',
+            urgence    : _detectedUrgence,
+            description: description,
+          });
+        }
         _toggleSuccessState(true, type, _detectedUrgence, _triggeredBy);
         if (typeof window.showToast === 'function') {
           showToast('Réclamation soumise avec succès ✓');
